@@ -117,22 +117,32 @@ void updateFaceLogic() {
 
   // Xử lý Blink Override độc lập (Không làm hỏng State gốc)
   unsigned long now = millis();
+  
+  // Tùy chỉnh tốc độ nhắm mắt: Ngạc nhiên thì chớp cực nhanh (50ms) để không bỏ lỡ khoảnh khắc
+  unsigned long blinkDuration = 150; 
+  if (targetFace.eyeHeight == stateSurprised.eyeHeight) blinkDuration = 50;
+
   if (now - lastBlinkTime > nextBlinkDelay) {
     targetBlinkFactor = 0.05; // Ép chiều cao về 5%
-    if (now - lastBlinkTime > nextBlinkDelay + 150) { // Giữ mắt nhắm trong 150ms
+    if (now - lastBlinkTime > nextBlinkDelay + blinkDuration) { // Giữ mắt nhắm trong blinkDuration
       targetBlinkFactor = 1.0; // Mở mắt
       lastBlinkTime = now;
       
-      // Xử lý chớp mắt liên tục khi buồn ngủ
+      // Xử lý chớp mắt liên tục khi buồn ngủ hoặc ngạc nhiên
       if (sleepBlinkCount > 0) {
         sleepBlinkCount--;
         nextBlinkDelay = 300; // Nháy lại ngay lập tức sau 300ms
+      } else if (targetFace.eyeHeight == stateSurprised.eyeHeight) {
+        nextBlinkDelay = random(1000, 2500); // Ngạc nhiên: tần suất chớp mắt cao hơn (1-2.5s)
       } else {
         nextBlinkDelay = random(2000, 6000); // Ngẫu nhiên 2s đến 6s
       }
     }
   }
-  blinkFactor += (targetBlinkFactor - blinkFactor) * 0.5; // Tốc độ chớp cực nhanh (0.5 > 0.3)
+  
+  // Tốc độ khép mí: Ngạc nhiên chớp lẹ hơn bình thường (0.7 so với 0.5)
+  float blinkSpeed = (targetFace.eyeHeight == stateSurprised.eyeHeight) ? 0.7f : 0.5f;
+  blinkFactor += (targetBlinkFactor - blinkFactor) * blinkSpeed; 
 }
 
 uint32_t lerpColor(uint32_t from, uint32_t to, float t) {
