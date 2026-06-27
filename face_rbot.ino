@@ -143,9 +143,16 @@ void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, f
       rBL_x = rBR_x = w*0.2; rBL_y = rBR_y = h*0.2;
     }
   } else {
-    // Miệng: 15% 15% 50% 50% / 15% 15% 100% 100%
-    rTL_x = rTR_x = w * 0.15; rTL_y = rTR_y = h * 0.15;
-    rBL_x = rBR_x = w * 0.5;  rBL_y = rBR_y = h * 1.0;
+    // Miệng: Hiệu ứng mở tròn chữ O/A
+    float topRadiusFactor = 0.15f; // Mặc định: bo nhẹ 15%
+    if (h > 20.0f) {
+      // Khi chiều cao > 20, tăng dần độ bo tròn góc trên
+      topRadiusFactor = 0.15f + (h - 20.0f) * 0.02f; 
+      if (topRadiusFactor > 0.5f) topRadiusFactor = 0.5f; // Tối đa 50% (nửa hình tròn)
+    }
+
+    rTL_x = rTR_x = w * topRadiusFactor; rTL_y = rTR_y = h * topRadiusFactor;
+    rBL_x = rBR_x = w * 0.5f;  rBL_y = rBR_y = h * 1.0f;
   }
 
   // Chống tràn bán kính
