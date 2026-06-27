@@ -267,7 +267,7 @@ void renderToScreen() {
 
 unsigned long lastUpdate = 0;
 unsigned long stateChangeTimer = 0;
-int currentStateIndex = 0;
+unsigned long nextStateDelay = 2000;
 
 void setup() {
   Serial.begin(115200);
@@ -299,17 +299,27 @@ void loop() {
     renderToScreen();
   }
 
-  if (now - stateChangeTimer > 3000) {
+  if (now - stateChangeTimer > nextStateDelay) {
     stateChangeTimer = now;
-    currentStateIndex = (currentStateIndex + 1) % 7;
-    switch(currentStateIndex) {
-      case 0: targetFace = stateNormal; break;
-      case 1: targetFace = stateHappy; break;
-      case 2: targetFace = stateLookLeft; break;
-      case 3: targetFace = stateLookRight; break;
-      case 4: targetFace = stateSad; break;
-      case 5: targetFace = stateTalk; break;
-      case 6: targetFace = stateIdle; break;
+    
+    // Hệ thống Alive Behavior (Mô phỏng sự sống)
+    int randBehavior = random(0, 100);
+    
+    if (randBehavior < 60) {
+      // 60% thời gian: Rảnh rỗi, liếc nhìn ngẫu nhiên
+      targetFace = stateNormal;
+      targetFace.offsetX = random(-35, 36); // Liếc sang 2 bên
+      targetFace.offsetY = random(-15, 21); // Ngước lên / Cúi xuống
+      nextStateDelay = random(1000, 3000);  // Thay đổi điểm nhìn nhanh
+    } else {
+      // 40% thời gian: Thể hiện cảm xúc (Vui, Buồn, Nói chuyện, Ngủ)
+      int emotion = random(0, 4);
+      if (emotion == 0) targetFace = stateHappy;
+      else if (emotion == 1) targetFace = stateSad;
+      else if (emotion == 2) targetFace = stateTalk;
+      else targetFace = stateIdle;
+      
+      nextStateDelay = random(3000, 6000); // Giữ cảm xúc lâu hơn
     }
   }
 }
