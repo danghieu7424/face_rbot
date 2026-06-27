@@ -84,6 +84,7 @@ FaceState targetFace = stateIdle;
 volatile int targetEmotionCode = 7; // Mặc định là Idle (7)
 int lastEmotionCode = 7; // Dùng trên Core 1 để phát hiện chuyển đổi trạng thái
 unsigned long winkStartTime = 0;
+unsigned long sleepStartTime = 0;
 
 // ==========================================
 // HỆ THỐNG AI: Q-LEARNING & MOCK SENSORS
@@ -111,29 +112,29 @@ int currentSound = QUIET;
 int currentTouch = UNTOUCHED;
 
 // Hàm chuyển đổi tổ hợp cảm biến thành 1 mã trạng thái (0-11)
-#line 112 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 113 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch);
-#line 117 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 118 "C:\\rust\\face_rbot\\face_rbot.ino"
 void readMockSensors();
-#line 125 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 126 "C:\\rust\\face_rbot\\face_rbot.ino"
 float calculateReward(int state, int action);
-#line 155 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 156 "C:\\rust\\face_rbot\\face_rbot.ino"
 void learn(int state, int action, float reward, int nextState);
-#line 167 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 168 "C:\\rust\\face_rbot\\face_rbot.ino"
 void AITask(void *pvParameters);
-#line 245 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 246 "C:\\rust\\face_rbot\\face_rbot.ino"
 void updateFaceLogic();
-#line 306 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 307 "C:\\rust\\face_rbot\\face_rbot.ino"
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
-#line 324 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 325 "C:\\rust\\face_rbot\\face_rbot.ino"
 void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth);
-#line 449 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 450 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 575 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 591 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 607 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 623 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
-#line 112 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 113 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
   return temp * 4 + sound * 2 + touch;
 }
@@ -492,41 +493,56 @@ void renderToScreen() {
   float leftEyeScale = 1.0f + (effX * 0.002f); 
   float rightEyeScale = 1.0f - (effX * 0.002f);
 
-  // Hiệu ứng Nháy mắt (Wink): Chờ bình thường -> Nghiêng đầu -> Nháy
+  // Hiệu ứng Ngủ (Sleep): Nháy mắt 2 lần trước khi nhắm hẳn
+  if (targetEmotionCode == 3) {
+    long elapsed = millis() - sleepStartTime;
+    // Nháy lần 1: 0 -> 300ms
+    if (elapsed < 150) blinkFactor = 1.0f - (elapsed / 150.0f);
+    else if (elapsed < 300) blinkFactor = (elapsed - 150) / 150.0f;
+    // Nháy lần 2: 300 -> 600ms
+    else if (elapsed < 450) blinkFactor = 1.0f - ((elapsed - 300) / 150.0f);
+    else if (elapsed < 600) blinkFactor = (elapsed - 450) / 150.0f;
+    
+    // Từ 600ms trở đi, updateFaceLogic sẽ tự lo phần nhắm tịt (interpolation)
+    if (elapsed < 600 && blinkFactor < 0.05f) blinkFactor = 0.05f;
+  }
+
+  // Hiệu ứng Nháy mắt (Wink): Liếc mắt sang phải -> Nháy
   bool isWinking = (targetEmotionCode == 10);
   float oldBlink = blinkFactor;
-  float extraAngle = 0.0f;
-  float tiltYOffset = 0.0f; // Trục Y nghiêng đầu
   
   if (isWinking) {
     long elapsed = millis() - winkStartTime;
     
-    // Giai đoạn 1 (0 -> 400ms): Chờ mắt interpolate về trạng thái bình thường (không làm gì)
-    // Giai đoạn 2 (400 -> 700ms): Nghiêng cả cái đầu
-    if (elapsed > 400 && elapsed <= 700) {
-      extraAngle = ((elapsed - 400) / 300.0f) * 15.0f; // Nghiêng 15 độ
-      tiltYOffset = ((elapsed - 400) / 300.0f) * 20.0f; // Mắt lệch nhau 20px
-    } else if (elapsed > 700) {
-      extraAngle = 15.0f;
-      tiltYOffset = 20.0f;
+    // Giai đoạn 1 (0 -> 400ms): Liếc mắt sang phải (Tăng effX)
+    if (elapsed <= 400) {
+      effX += ((float)elapsed / 400.0f) * 40.0f; // Liếc qua phải 40px
+    } else if (elapsed > 400) {
+      effX += 40.0f; // Giữ nguyên vị trí liếc
     }
     
-    // Giai đoạn 3 (700 -> 1000ms): Nháy mắt
-    if (elapsed > 700 && elapsed <= 850) {
-      blinkFactor = 1.0f - ((elapsed - 700) / 150.0f); // Mắt đang đóng xuống
-    } else if (elapsed > 850 && elapsed <= 1000) {
-      blinkFactor = ((elapsed - 850) / 150.0f); // Mắt đang mở lên
-    } else if (elapsed > 1000) {
+    // Tính lại tọa độ mắt Lx, Rx vì effX vừa bị thay đổi
+    eyeLx = 60 + effX;
+    eyeRx = 180 + effX;
+    leftEyeScale = 1.0f + (effX * 0.002f); 
+    rightEyeScale = 1.0f - (effX * 0.002f);
+    
+    // Giai đoạn 2 (400 -> 700ms): Nháy mắt trái
+    if (elapsed > 400 && elapsed <= 550) {
+      blinkFactor = 1.0f - ((elapsed - 400) / 150.0f); // Mắt đang đóng xuống
+    } else if (elapsed > 550 && elapsed <= 700) {
+      blinkFactor = ((elapsed - 550) / 150.0f); // Mắt đang mở lên
+    } else if (elapsed > 700) {
       blinkFactor = 1.0f; // Nháy xong
     }
     
     if (blinkFactor < 0.05f) blinkFactor = 0.05f; // Guardrail tránh dẹp lép
   }
   
-  drawEye(eyeLx, eyeY + tiltYOffset, false, leftEyeScale, extraAngle); 
+  drawEye(eyeLx, eyeY, false, leftEyeScale, 0.0f); 
   
   if (isWinking) blinkFactor = oldBlink; // Mắt phải giữ nguyên trạng thái gốc
-  drawEye(eyeRx, eyeY - tiltYOffset, true, rightEyeScale, extraAngle);
+  drawEye(eyeRx, eyeY, true, rightEyeScale, 0.0f);
 
   // Hiệu ứng Khóc (Cry): Rơi nước mắt
   if (targetEmotionCode == 8) { 
@@ -634,6 +650,9 @@ void loop() {
   if (targetEmotionCode != lastEmotionCode) {
     if (targetEmotionCode == 10) {
       winkStartTime = millis(); // Reset đồng hồ đo Wink
+    }
+    if (targetEmotionCode == 3) {
+      sleepStartTime = millis(); // Reset đồng hồ đo Sleep
     }
     lastEmotionCode = targetEmotionCode;
   }
