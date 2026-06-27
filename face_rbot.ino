@@ -67,6 +67,7 @@ const FaceState stateSad       = {0, 35, 40, 15,-10, 4, 14,  4, 20, 2, 4,   0,  
 const FaceState stateLookLeft  = {0, 35, 50, 20,  5, 4, 14,  5, 25, 2, 4, -30,   0};
 const FaceState stateLookRight = {0, 35, 50, 20,  5, 4, 14,  5, 25, 2, 4,  30,   0};
 const FaceState stateTalk      = {0, 38, 55, 18,  7, 4, 14, 35, 30, 2, 4,   0,  -2};
+const FaceState stateSleep     = {0, 40,  6,  3,  0, 4, 14,  0,  0, 0, 0,   0,  15}; // Mắt khép nhỏ, đầu cúi xuống (offsetY=15)
 
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle;
@@ -340,14 +341,19 @@ void loop() {
       targetFace.offsetY = random(-15, 21); // Ngước lên / Cúi xuống
       nextStateDelay = random(1000, 3000);  // Thay đổi điểm nhìn nhanh
     } else {
-      // 40% thời gian: Thể hiện cảm xúc (Vui, Buồn, Nói chuyện, Ngủ)
-      int emotion = random(0, 4);
+      // 40% thời gian: Thể hiện cảm xúc (Vui, Buồn, Nói chuyện, Nhàn rỗi, Ngủ)
+      int emotion = random(0, 5);
       if (emotion == 0) targetFace = stateHappy;
       else if (emotion == 1) targetFace = stateSad;
       else if (emotion == 2) targetFace = stateTalk;
+      else if (emotion == 3) targetFace = stateSleep;
       else targetFace = stateIdle;
       
-      nextStateDelay = random(3000, 6000); // Giữ cảm xúc lâu hơn
+      if (emotion == 3) {
+        nextStateDelay = random(5000, 10000); // Khi ngủ thì ngủ lâu hơn (5s - 10s)
+      } else {
+        nextStateDelay = random(3000, 6000); // Các cảm xúc khác giữ ngắn hơn
+      }
     }
   }
 }
