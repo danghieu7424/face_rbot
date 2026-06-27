@@ -254,8 +254,8 @@ void renderToScreen() {
     // --- OVERRIDE: TALK ANIMATION (Mấp máy môi) ---
     // Chỉ kích hoạt khi mục tiêu là trạng thái Nói (chiều cao miệng > 30)
     if (targetFace.mouthHeight > 30) {
-      // Dùng 2 sóng sin lồng nhau để tạo nhịp điệu nói chuyện ngẫu nhiên, tự nhiên hơn
-      float talkPhase = millis() / 80.0f;
+      // Giảm tốc độ nói (chia cho 150.0f thay vì 80.0f) để khớp với nhịp điệu tự nhiên hơn
+      float talkPhase = millis() / 150.0f;
       float talkFactor = 0.3f + 0.7f * abs(sin(talkPhase) * sin(talkPhase * 0.6f));
       h = h * talkFactor;
     }
