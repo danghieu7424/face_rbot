@@ -286,8 +286,9 @@ void renderToScreen() {
     float h = currentFace.mouthHeight;
     
     // --- OVERRIDE: TALK ANIMATION (Mấp máy môi) ---
-    // Chỉ kích hoạt khi mục tiêu là trạng thái Nói (chiều cao miệng > 30)
-    if (targetFace.mouthHeight > 30) {
+    // Chỉ kích hoạt khi mục tiêu CHÍNH XÁC là trạng thái Nói (chiều cao miệng == 35)
+    // Điều này tránh việc trạng thái Ngạc nhiên (chiều cao 40) bị mấp máy môi sai cách
+    if (abs(targetFace.mouthHeight - 35.0f) < 0.1f) {
       // Giảm tốc độ nói (chia cho 150.0f thay vì 80.0f) để khớp với nhịp điệu tự nhiên hơn
       float talkPhase = millis() / 150.0f;
       float talkFactor = 0.3f + 0.7f * abs(sin(talkPhase) * sin(talkPhase * 0.6f));
@@ -358,29 +359,38 @@ void loop() {
   if (now - stateChangeTimer > nextStateDelay) {
     stateChangeTimer = now;
     
-    // CHẾ ĐỘ TRÌNH DIỄN (Demo Mode): Duyệt tuần tự qua các trạng thái để dễ kiểm tra
-    static int testState = 0;
+    // Hệ thống Alive Behavior (Mô phỏng sự sống)
+    int randBehavior = random(0, 100);
     
-    if (testState == 0) targetFace = stateHappy;
-    else if (testState == 1) targetFace = stateSad;
-    else if (testState == 2) targetFace = stateTalk;
-    else if (testState == 3) {
-      targetFace = stateSleep;
-      // Kích hoạt chuỗi hành động ngái ngủ (Drowsy Sequence)
-      sleepBlinkCount = 2; 
-      nextBlinkDelay = 200; 
-      lastBlinkTime = millis();
-    }
-    else if (testState == 4) targetFace = stateAngry;
-    else if (testState == 5) targetFace = stateSurprised;
-    else if (testState == 6) targetFace = stateDoubt;
-    else if (testState == 7) {
+    if (randBehavior < 60) {
+      // 60% thời gian: Rảnh rỗi, liếc nhìn ngẫu nhiên
       targetFace = stateNormal;
-      targetFace.offsetX = random(-30, 31); // Kèm liếc nhìn
+      targetFace.offsetX = random(-35, 36); // Liếc sang 2 bên
+      targetFace.offsetY = random(-15, 21); // Ngước lên / Cúi xuống
+      nextStateDelay = random(1000, 3000);  // Thay đổi điểm nhìn nhanh
+    } else {
+      // 40% thời gian: Thể hiện cảm xúc đa dạng
+      int emotion = random(0, 8); // 8 Trạng thái (0->7)
+      if (emotion == 0) targetFace = stateHappy;
+      else if (emotion == 1) targetFace = stateSad;
+      else if (emotion == 2) targetFace = stateTalk;
+      else if (emotion == 3) targetFace = stateSleep;
+      else if (emotion == 4) targetFace = stateAngry;
+      else if (emotion == 5) targetFace = stateSurprised;
+      else if (emotion == 6) targetFace = stateDoubt;
+      else targetFace = stateIdle;
+      
+      if (emotion == 3) {
+        nextStateDelay = random(5000, 10000); // Khi ngủ thì ngủ lâu hơn (5s - 10s)
+        
+        // Kích hoạt chuỗi hành động ngái ngủ (Drowsy Sequence)
+        sleepBlinkCount = 2; // Ép chớp mắt 2 lần liên tiếp
+        nextBlinkDelay = 200; // Bắt đầu chớp cái đầu tiên ngay lập tức
+        lastBlinkTime = millis();
+      } else {
+        nextStateDelay = random(3000, 6000); // Các cảm xúc khác giữ ngắn hơn
+      }
     }
-
-    testState = (testState + 1) % 8;
-    nextStateDelay = 4000; // Cố định mỗi 4 giây đổi 1 biểu cảm
   }
 }
 
