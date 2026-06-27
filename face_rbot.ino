@@ -83,45 +83,93 @@ void updateFaceLogic() {
   currentFace.mouthInnerShadow += (targetFace.mouthInnerShadow - currentFace.mouthInnerShadow) * lerpSpeed;
 }
 
-uint32_t lerpColor(uint32_t c1, uint32_t c2, float t) {
-  float r1 = (c1 >> 11) & 0x1F;
-  float g1 = (c1 >> 5)  & 0x3F;
-  float b1 = c1         & 0x1F;
+uint32_t lerpColor(uint32_t from, uint32_t to, float t) {
+  uint8_t r1 = (from >> 11) & 0x1F; r1 = (r1 << 3) | (r1 >> 2);
+  uint8_t g1 = (from >> 5) & 0x3F;  g1 = (g1 << 2) | (g1 >> 4);
+  uint8_t b1 = from & 0x1F;         b1 = (b1 << 3) | (b1 >> 2);
 
-  float r2 = (c2 >> 11) & 0x1F;
-  float g2 = (c2 >> 5)  & 0x3F;
-  float b2 = c2         & 0x1F;
+  uint8_t r2 = (to >> 11) & 0x1F; r2 = (r2 << 3) | (r2 >> 2);
+  uint8_t g2 = (to >> 5) & 0x3F;  g2 = (g2 << 2) | (g2 >> 4);
+  uint8_t b2 = to & 0x1F;         b2 = (b2 << 3) | (b2 >> 2);
 
-  uint16_t r = (uint16_t)(r1 + (r2 - r1) * t + 0.5f);
-  uint16_t g = (uint16_t)(g1 + (g2 - g1) * t + 0.5f);
-  uint16_t b = (uint16_t)(b1 + (b2 - b1) * t + 0.5f);
+  uint8_t r = r1 + (r2 - r1) * t;
+  uint8_t g = g1 + (g2 - g1) * t;
+  uint8_t b = b1 + (b2 - b1) * t;
 
-  return (r << 11) | (g << 5) | b;
+  return tft.color565(r, g, b);
 }
 
-#define MASK_CORE   0xFFFE
-#define MASK_SHADOW 0xFFFD
+// Thuật toán Scanline Rasterization vẽ bo góc Elip bất đối xứng + Gradient Dọc (VGradient) siêu mượt
+void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth) {
+  float rTL_x=0, rTL_y=0, rTR_x=0, rTR_y=0, rBR_x=0, rBR_y=0, rBL_x=0, rBL_y=0;
+  
+  if (!isMouth) {
+    int type = (int)(shapeType + 0.5);
+    float r = currentFace.eyeRadius;
+    if (type == 0) { 
+      rTL_x = rTL_y = rTR_x = rTR_y = rBR_x = rBR_y = rBL_x = rBL_y = r;
+    } else if (type == 1) { // Bán nguyệt trên
+      rTL_x = rTR_x = w/2; rTL_y = rTR_y = h/2;
+      rBL_x = rBR_x = w*0.1; rBL_y = rBR_y = h*0.1;
+    } else if (type == 2) { // Bán nguyệt dưới
+      rTL_x = rTR_x = w*0.1; rTL_y = rTR_y = h*0.1;
+      rBL_x = rBR_x = w/2; rBL_y = rBR_y = h/2;
+    } else if (type == 3) { // Oval phẳng đáy
+      rTL_x = rTR_x = w/2; rTL_y = rTR_y = h/2;
+      rBL_x = rBR_x = w*0.2; rBL_y = rBR_y = h*0.2;
+    }
+  } else {
+    // Miệng: 15% 15% 50% 50% / 15% 15% 100% 100%
+    rTL_x = rTR_x = w * 0.15; rTL_y = rTR_y = h * 0.15;
+    rBL_x = rBR_x = w * 0.5;  rBL_y = rBR_y = h * 1.0;
+  }
 
-void applyScreenSpaceDeferredShading(uint32_t colorTop, uint32_t colorBot, uint32_t shadowColor) {
-  uint16_t* buffer = (uint16_t*)canvasSprite.getBuffer();
-  int width = 240;
-  uint16_t shadow16 = (uint16_t)shadowColor;
+  // Chống tràn bán kính
+  if (rTL_x > w/2) rTL_x = w/2; if (rTR_x > w/2) rTR_x = w/2;
+  if (rBL_x > w/2) rBL_x = w/2; if (rBR_x > w/2) rBR_x = w/2;
+  if (rTL_y > h/2) rTL_y = h/2; if (rTR_y > h/2) rTR_y = h/2;
+  if (rBL_y > h) rBL_y = h; if (rBR_y > h) rBR_y = h; 
 
-  for (int y = 0; y < 240; y++) {
-    // VGradient gốc màn hình (Mắt robot thường nằm từ tọa độ Y=40 -> 140)
-    float t = (y - 40.0f) / 100.0f;
-    if (t < 0) t = 0; 
-    if (t > 1) t = 1;
-    uint32_t c32 = lerpColor(colorTop, colorBot, t);
-    uint16_t grad16 = (uint16_t)c32;
+  int startX = cx - w/2;
+  int startY = cy - h/2;
+  int H = (int)h;
+  int W = (int)w;
 
-    for (int x = 0; x < width; x++) {
-      int index = y * width + x;
-      if (buffer[index] == MASK_CORE) {
-        buffer[index] = grad16;
-      } else if (buffer[index] == MASK_SHADOW) {
-        buffer[index] = shadow16;
-      }
+  for (int y = 0; y < H; y++) {
+    float x_start = 0;
+    float x_end = W - 1;
+
+    // Cộng 0.5f để căn tâm Pixel, làm mượt viền
+    if (rTL_y > 0 && y < rTL_y) {
+      float dy = rTL_y - y - 0.5f; 
+      float val = 1.0f - (dy * dy) / (rTL_y * rTL_y);
+      if (val < 0) val = 0;
+      x_start = rTL_x - (rTL_x * sqrt(val));
+    }
+    if (rTR_y > 0 && y < rTR_y) {
+      float dy = rTR_y - y - 0.5f;
+      float val = 1.0f - (dy * dy) / (rTR_y * rTR_y);
+      if (val < 0) val = 0;
+      x_end = W - 1 - (rTR_x - (rTR_x * sqrt(val)));
+    }
+    if (rBL_y > 0 && y >= H - rBL_y) {
+      float dy = y - (H - rBL_y) + 0.5f;
+      float val = 1.0f - (dy * dy) / (rBL_y * rBL_y);
+      if (val < 0) val = 0;
+      x_start = rBL_x - (rBL_x * sqrt(val));
+    }
+    if (rBR_y > 0 && y >= H - rBR_y) {
+      float dy = y - (H - rBR_y) + 0.5f;
+      float val = 1.0f - (dy * dy) / (rBR_y * rBR_y);
+      if (val < 0) val = 0;
+      x_end = W - 1 - (rBR_x - (rBR_x * sqrt(val)));
+    }
+
+    float t = (H > 1) ? (float)y / (H - 1) : 0;
+    uint32_t color = lerpColor(colorTop, colorBot, t);
+
+    if (x_end >= x_start) {
+      spr->drawFastHLine(startX + (int)x_start, startY + y, (int)(x_end - x_start + 1), color);
     }
   }
 }
@@ -131,25 +179,22 @@ void drawEye(float centerX, float centerY, bool isRightEye) {
   float pivotX = 60, pivotY = 60;
   eyeSprite.setPivot(pivotX, pivotY);
 
+  uint32_t colorTop = tft.color565(0, 255, 255); // Cyan (Màu lõi sáng)
+  // ĐÃ LOẠI BỎ colorBot ĐỂ TRÁNH LỖI MOIRÉ KHI XOAY
+  uint32_t shadowColor = tft.color565(0, 20, 50); // Dark Blue (Màu nền bóng)
+
   float w = currentFace.eyeWidth;
   float h = currentFace.eyeHeight;
-  float r = currentFace.eyeRadius;
+  float shape = currentFace.eyeShapeType;
 
-  // Vẽ khối MASK tĩnh
-  eyeSprite.fillRoundRect(pivotX - w/2, pivotY - h/2, w, h, r, MASK_SHADOW);
-  eyeSprite.fillRoundRect(pivotX - w/2 + 2, pivotY - h/2 - 2, w - 4, h - 4, r - 1, MASK_CORE);
+  // 1. Vẽ Bóng Giả (Dark Blue) làm nền nguyên khối
+  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY, w, h, shape, shadowColor, shadowColor, false);
 
-  // Cắt hình (Masking theo Shape Type)
-  int type = (int)(currentFace.eyeShapeType + 0.5);
-  if (type == 1) { 
-    eyeSprite.fillRect(0, pivotY, 120, 60, TFT_BLACK);
-  } else if (type == 2) { 
-    eyeSprite.fillRect(0, 0, 120, pivotY, TFT_BLACK);
-  } else if (type == 3) { 
-    eyeSprite.fillRect(0, pivotY + h/4, 120, 60, TFT_BLACK);
-  }
+  // 2. Vẽ Lõi Sáng (ÉP CHẠY MÀU SOLID BẰNG CÁCH TRUYỀN colorTop CHO CẢ 2 THAM SỐ)
+  // Sự đồng nhất màu sẽ khiến hiện tượng xé dòng (banding) khi xoay biến mất hoàn toàn
+  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 2, w - 2, h - 2, shape, colorTop, colorTop, false);
 
-  // Đẩy khối MASK ra Screen với góc xoay (sẽ có răng cưa ở viền quay, nhưng KHÔNG CÓ RĂNG CƯA GRADIENT)
+  // Xoay và in ra màn hình
   canvasSprite.setPivot(centerX, centerY);
   float angle = isRightEye ? -currentFace.eyeAngle : currentFace.eyeAngle;
   eyeSprite.pushRotated(&canvasSprite, angle, TFT_BLACK); 
@@ -167,17 +212,16 @@ void renderToScreen() {
     float w = currentFace.mouthWidth;
     float h = currentFace.mouthHeight;
     
-    // Miệng cũng sử dụng MASK
-    canvasSprite.fillRoundRect(mouthX - w/2, mouthY - h/2, w, h, h/2, MASK_SHADOW);
-    canvasSprite.fillRoundRect(mouthX - w/2 + 2, mouthY - h/2 - 2, w - 4, h - 4, (h-4)/2, MASK_CORE);
+    uint32_t colorTop = tft.color565(0, 255, 255);
+    // ĐÃ LOẠI BỎ colorBot CỦA MIỆNG
+    uint32_t shadowColor = tft.color565(0, 20, 50);
+
+    // Bóng giả cho Miệng
+    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, w, h, 0, shadowColor, shadowColor, true);
+    
+    // Lõi sáng dịch lên (ÉP CHẠY MÀU SOLID TƯƠNG TỰ MẮT ĐỂ ĐỒNG BỘ)
+    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 2, w - 2, h - 2, 0, colorTop, colorTop, true);
   }
-
-  uint32_t colorTop = tft.color565(0, 255, 255);
-  uint32_t colorBot = tft.color565(0, 0, 255);
-  uint32_t shadowColor = tft.color565(0, 0, 50);
-
-  // Kích hoạt Engine Deferred Shading để tô màu Gradient hoàn hảo lên Screen!
-  applyScreenSpaceDeferredShading(colorTop, colorBot, shadowColor);
 
   canvasSprite.pushSprite(0, 0);
 }
