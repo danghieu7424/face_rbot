@@ -145,20 +145,21 @@ void updateFaceLogic() {
   blinkFactor += (targetBlinkFactor - blinkFactor) * blinkSpeed; 
 }
 
+// Sử dụng trực tiếp mã màu chuẩn RGB888 để lerp, tránh lỗi Byte-swapping của màn hình LCD
 uint32_t lerpColor(uint32_t from, uint32_t to, float t) {
-  uint8_t r1 = (from >> 11) & 0x1F; r1 = (r1 << 3) | (r1 >> 2);
-  uint8_t g1 = (from >> 5) & 0x3F;  g1 = (g1 << 2) | (g1 >> 4);
-  uint8_t b1 = from & 0x1F;         b1 = (b1 << 3) | (b1 >> 2);
+  uint8_t r1 = (from >> 16) & 0xFF;
+  uint8_t g1 = (from >> 8) & 0xFF;
+  uint8_t b1 = from & 0xFF;
 
-  uint8_t r2 = (to >> 11) & 0x1F; r2 = (r2 << 3) | (r2 >> 2);
-  uint8_t g2 = (to >> 5) & 0x3F;  g2 = (g2 << 2) | (g2 >> 4);
-  uint8_t b2 = to & 0x1F;         b2 = (b2 << 3) | (b2 >> 2);
+  uint8_t r2 = (to >> 16) & 0xFF;
+  uint8_t g2 = (to >> 8) & 0xFF;
+  uint8_t b2 = to & 0xFF;
 
   uint8_t r = r1 + (r2 - r1) * t;
   uint8_t g = g1 + (g2 - g1) * t;
   uint8_t b = b1 + (b2 - b1) * t;
 
-  return tft.color565(r, g, b);
+  return tft.color565(r, g, b); // Chỉ convert sang 565 ở bước cuối cùng khi vẽ
 }
 
 // Thuật toán Scanline Rasterization vẽ bo góc Elip bất đối xứng + Gradient Dọc (VGradient) siêu mượt
@@ -247,11 +248,11 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
   float pivotX = 60, pivotY = 60;
   eyeSprite.setPivot(pivotX, pivotY);
 
-  // ĐỊNH NGHĨA DẢI MÀU (Bảng màu tĩnh theo Hybrid FSD / Token Design)
-  uint32_t colorTop = tft.color565(0, 220, 0);  // Lớp Tâm: Dịch xuống một chút (giảm độ chói/vibrancy)
-  uint32_t colorMid = tft.color565(0, 215, 0);  // Lớp Giữa: Xanh lá dịu
-  uint32_t colorBot = tft.color565(0, 210, 0);  // Lớp Đáy: Xanh lá sâu
-  uint32_t shadowColor = tft.color565(0, 200, 0); // Lớp Bóng giả: Giảm độ sáng (bé lại)
+  // ĐỊNH NGHĨA DẢI MÀU (Bảng màu tĩnh theo chuẩn RGB888 Hex)
+  uint32_t colorTop    = 0x00DC00; // (0, 220, 0)
+  uint32_t colorMid    = 0x00D700; // (0, 215, 0)
+  uint32_t colorBot    = 0x00D200; // (0, 210, 0)
+  uint32_t shadowColor = 0x00C800; // (0, 200, 0)
 
   float w = currentFace.eyeWidth * scale3D;
   float h = currentFace.eyeHeight * blinkFactor * scale3D; // Áp dụng Blink Override & 3D Scale
@@ -314,11 +315,11 @@ void renderToScreen() {
       if (topRadiusFactor > 0.5f) topRadiusFactor = 0.5f; // Đạt đỉnh tròn trịa (50%)
     }
 
-    // Đồng bộ bảng màu với Mắt
-    uint32_t colorTop = tft.color565(0, 220, 0);
-    uint32_t colorMid = tft.color565(0, 215, 0);
-    uint32_t colorBot = tft.color565(0, 210, 0);
-    uint32_t shadowColor = tft.color565(0, 200, 0);
+    // Đồng bộ bảng màu với Mắt (RGB888 Hex)
+    uint32_t colorTop    = 0x00DC00;
+    uint32_t colorMid    = 0x00D700;
+    uint32_t colorBot    = 0x00D200;
+    uint32_t shadowColor = 0x00C800;
 
     // Truyền topRadiusFactor vào tham số thứ 6 (shapeType) để đảm bảo mọi lớp đồng bộ độ bo góc
     drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, w - 4, h, topRadiusFactor, shadowColor, shadowColor, true);
