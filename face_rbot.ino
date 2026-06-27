@@ -143,19 +143,12 @@ void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, f
       rBL_x = rBR_x = w*0.2; rBL_y = rBR_y = h*0.2;
     }
   } else {
-    // Miệng: Hiệu ứng mở tròn chữ O/A
-    float topRadiusFactor = 0.15f; // Mặc định: bo nhẹ 15%
-    float bottomRadiusFactor = 1.0f; // Mặc định: đáy chữ U sâu 100%
-
-    // SỬ DỤNG CHIỀU CAO GỐC (currentFace.mouthHeight) thay vì h của từng layer
-    // Việc này đảm bảo TẤT CẢ 4 lớp màu (Shadow, Bot, Mid, Top) đều có chung 1 tỷ lệ bo tròn
-    if (currentFace.mouthHeight > 20.0f) {
-      topRadiusFactor = 0.15f + (currentFace.mouthHeight - 20.0f) * 0.03f; 
-      if (topRadiusFactor > 0.5f) topRadiusFactor = 0.5f; // Tối đa 50% (nửa đường tròn trên)
-      
-      // Nội suy đáy: Khi góc trên tròn ra (0.5), góc dưới phải thu lại (0.5) để tạo hình chữ O hoàn hảo
-      bottomRadiusFactor = 1.0f - (topRadiusFactor - 0.15f) * 1.428f; 
-    }
+    // Miệng: Góc trên bo từ 0% (phẳng) lên 50% (tròn) khi miệng mở lớn
+    // Sử dụng thông số shapeType được truyền từ renderToScreen làm hệ số bo tròn
+    float topRadiusFactor = shapeType; 
+    
+    // Tự động nội suy đáy: Khi góc trên mở tròn, góc dưới cũng thu tròn lại để thành hình chữ O
+    float bottomRadiusFactor = 1.0f - topRadiusFactor;
 
     rTL_x = rTR_x = w * topRadiusFactor; rTL_y = rTR_y = h * topRadiusFactor;
     rBL_x = rBR_x = w * 0.5f;  rBL_y = rBR_y = h * bottomRadiusFactor;
@@ -275,19 +268,26 @@ void renderToScreen() {
     
     if (h < 2) h = 2; // Guardrail: giữ miệng không bị sập hoàn toàn
 
+    // Tính toán độ bo tròn tức thời (0% -> 50%) dựa trên chiều cao thực tế lúc đang nói
+    float topRadiusFactor = 0.0f; 
+    if (h > 8.0f) {
+      topRadiusFactor = (h - 8.0f) * 0.0185f; // Bắt đầu bo tròn khi h > 8
+      if (topRadiusFactor > 0.5f) topRadiusFactor = 0.5f; // Đạt đỉnh tròn trịa (50%)
+    }
+
     // Đồng bộ bảng màu với Mắt
     uint32_t colorTop = tft.color565(0, 220, 255);
     uint32_t colorMid = tft.color565(0, 215, 255);
     uint32_t colorBot = tft.color565(0, 210, 255);
     uint32_t shadowColor = tft.color565(0, 200, 255);
 
-    // Bóng giả cho Miệng thu hẹp (w - 4)
-    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, w - 4, h, 0, shadowColor, shadowColor, true);
+    // Truyền topRadiusFactor vào tham số thứ 6 (shapeType) để đảm bảo mọi lớp đồng bộ độ bo góc
+    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, w - 4, h, topRadiusFactor, shadowColor, shadowColor, true);
     
     // Chuyển màu phân lớp cho Miệng (viền mỏng hơn)
-    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 1, w,     h,     0, colorBot, colorBot, true);
-    if (h > 2) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 2, w - 2, h - 2, 0, colorMid, colorMid, true);
-    if (h > 4) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 3, w - 4, h - 4, 0, colorTop, colorTop, true);
+    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 1, w,     h,     topRadiusFactor, colorBot, colorBot, true);
+    if (h > 2) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 2, w - 2, h - 2, topRadiusFactor, colorMid, colorMid, true);
+    if (h > 4) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 3, w - 4, h - 4, topRadiusFactor, colorTop, colorTop, true);
   }
 
   canvasSprite.pushSprite(0, 0);
