@@ -181,9 +181,9 @@ void drawEye(float centerX, float centerY, bool isRightEye) {
 
   // ĐỊNH NGHĨA DẢI MÀU (Bảng màu tĩnh theo Hybrid FSD / Token Design)
   uint32_t colorTop = tft.color565(0, 220, 255);  // Lớp Tâm: Dịch xuống một chút (giảm độ chói/vibrancy)
-  uint32_t colorMid = tft.color565(0, 200, 255);  // Lớp Giữa: Xanh biển dịu
-  uint32_t colorBot = tft.color565(0, 180, 255);  // Lớp Đáy: Xanh dương sâu
-  uint32_t shadowColor = tft.color565(0, 50, 150); // Lớp Bóng giả: Giảm độ sáng (bé lại)
+  uint32_t colorMid = tft.color565(0, 210, 255);  // Lớp Giữa: Xanh biển dịu
+  uint32_t colorBot = tft.color565(0, 200, 255);  // Lớp Đáy: Xanh dương sâu
+  uint32_t shadowColor = tft.color565(0, 100, 255); // Lớp Bóng giả: Giảm độ sáng (bé lại)
 
   float w = currentFace.eyeWidth;
   float h = currentFace.eyeHeight;
@@ -219,9 +219,9 @@ void renderToScreen() {
     
     // Đồng bộ bảng màu với Mắt
     uint32_t colorTop = tft.color565(0, 220, 255);
-    uint32_t colorMid = tft.color565(0, 200, 255);
-    uint32_t colorBot = tft.color565(0, 180, 255);
-    uint32_t shadowColor = tft.color565(0, 50, 150);
+    uint32_t colorMid = tft.color565(0, 210, 255);
+    uint32_t colorBot = tft.color565(0, 200, 255);
+    uint32_t shadowColor = tft.color565(0, 100, 255);
 
     // Bóng giả cho Miệng thu hẹp (w - 4)
     drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, w - 4, h, 0, shadowColor, shadowColor, true);
