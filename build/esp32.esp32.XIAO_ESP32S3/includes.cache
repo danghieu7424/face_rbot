@@ -1,0 +1,547 @@
+[
+  {
+    "Sourcefile": null,
+    "Include": "",
+    "Includepath": "C:\\Users\\dangh\\AppData\\Local\\Arduino15\\packages\\esp32\\hardware\\esp32\\2.0.11\\cores\\esp32"
+  },
+  {
+    "Sourcefile": null,
+    "Include": "",
+    "Includepath": "C:\\Users\\dangh\\AppData\\Local\\Arduino15\\packages\\esp32\\hardware\\esp32\\2.0.11\\variants\\XIAO_ESP32S3"
+  },
+  {
+    "Sourcefile": "C:\\rust\\face_rbot\\build\\esp32.esp32.XIAO_ESP32S3\\sketch\\face_rbot.ino.cpp",
+    "Include": "LovyanGFX.hpp",
+    "Includepath": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src"
+  },
+  {
+    "Sourcefile": "C:\\rust\\face_rbot\\build\\esp32.esp32.XIAO_ESP32S3\\sketch\\face_rbot.ino.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\Fonts\\IPA\\lgfx_font_japan.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\Fonts\\efont\\lgfx_efont_cn.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\Fonts\\efont\\lgfx_efont_ja.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\Fonts\\efont\\lgfx_efont_kr.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\Fonts\\efont\\lgfx_efont_tw.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\utility\\lgfx_miniz.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\utility\\lgfx_pngle.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\utility\\lgfx_qoi.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\utility\\lgfx_qrcode.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\utility\\lgfx_tjpgd.c",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\LGFXBase.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\LGFX_Button.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\LGFX_Sprite.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\lgfx_fonts.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\misc\\DividedFrameBuffer.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\misc\\SpriteBuffer.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\misc\\common_function.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\misc\\pixelcopy.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_AMOLED.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_Device.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_ED2208.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_EPDiy.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_FlexibleFrameBuffer.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_FrameBufferBase.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_GDEW0154D67.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_GDEW0154M09.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_HUB75.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_HasBuffer.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_ILI9225.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_IT8951.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_LCD.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_M5HDMI.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_M5UnitGLASS.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_M5UnitLCD.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_NT35510.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_NV3031B.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_NV3041A.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_RA8875.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_RM68120.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_SH8601Z.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_SSD1306.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_SSD1327.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_SSD1331.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_SSD1351.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_SSD1677.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_SSD1963.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\panel\\Panel_SharpLCD.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\arduino_default\\Bus_SPI.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\arduino_default\\Bus_Stream.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\arduino_default\\common.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32\\Bus_EPD.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32\\Bus_HUB75.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32\\Bus_I2C.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32\\Bus_Parallel8.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32\\Bus_SPI.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32\\Light_CH422G.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32\\Light_PWM.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32\\Panel_CVBS.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32\\Panel_EPD.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32\\common.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32c3\\Bus_Parallel8.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32p4\\Bus_DSI.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32p4\\Panel_DSI.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32p4\\Panel_LT8912B.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32p4\\Touch_ST7123.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32s2\\Bus_Parallel16.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32s2\\Bus_Parallel8.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32s3\\Bus_Parallel16.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32s3\\Bus_Parallel8.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32s3\\Bus_RGB.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp32s3\\Panel_RGB.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp8266\\Bus_I2C.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp8266\\Bus_SPI.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\esp8266\\common.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\framebuffer\\Panel_fb.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\framebuffer\\common.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\opencv\\Panel_OpenCV.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\opencv\\common.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\rp2040\\Bus_I2C.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\rp2040\\Bus_SPI.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\rp2040\\Light_PWM.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\rp2040\\common.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\samd21\\Bus_I2C.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\samd21\\Bus_SPI.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\samd21\\common.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\samd51\\Bus_I2C.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\samd51\\Bus_SPI.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\samd51\\common.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\sdl\\Panel_sdl.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\sdl\\common.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\spresense\\Bus_SPI.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\spresense\\common.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\stm32\\Bus_SPI.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\platforms\\stm32\\common.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\touch\\Touch_CHSC6540.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\touch\\Touch_CHSC6x.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\touch\\Touch_CSTxxx.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\touch\\Touch_FT5x06.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\touch\\Touch_GSLx680.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\touch\\Touch_GT911.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\touch\\Touch_NS2009.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\touch\\Touch_RA8875.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\touch\\Touch_STMPE610.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\touch\\Touch_TT21xxx.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\v1\\touch\\Touch_XPT2046.cpp",
+    "Include": "",
+    "Includepath": null
+  }
+]
