@@ -121,17 +121,17 @@ float calculateReward(int state, int action);
 void learn(int state, int action, float reward, int nextState);
 #line 167 "C:\\rust\\face_rbot\\face_rbot.ino"
 void AITask(void *pvParameters);
-#line 220 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 203 "C:\\rust\\face_rbot\\face_rbot.ino"
 void updateFaceLogic();
-#line 282 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 265 "C:\\rust\\face_rbot\\face_rbot.ino"
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
-#line 300 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 283 "C:\\rust\\face_rbot\\face_rbot.ino"
 void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth);
-#line 425 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 408 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 548 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 531 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 580 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 563 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 112 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -190,45 +190,28 @@ void learn(int state, int action, float reward, int nextState) {
 
 // Task chạy trên Core 0 (Độc lập với Vẽ đồ họa)
 void AITask(void *pvParameters) {
-  int currentState = getStateIndex(currentTemp, currentSound, currentTouch);
+  Serial.println("=========================================");
+  Serial.println("AI DANG DUOC TAM DUNG DE DEBUG.");
+  Serial.println("Vui long nhap so tu 0 den 10 de doi mat:");
+  Serial.println("0:Happy 1:Sad 2:Talk 3:Sleep 4:Angry");
+  Serial.println("5:Surprised 6:Doubt 7:Idle 8:Cry 9:Dizzy 10:Wink");
+  Serial.println("=========================================");
 
   for (;;) {
-    readMockSensors();
-    int nextState = getStateIndex(currentTemp, currentSound, currentTouch);
+    if (Serial.available() > 0) {
+      int code = Serial.parseInt();
+      // Đọc bỏ các ký tự thừa (như \n, \r)
+      while(Serial.available() > 0) Serial.read();
 
-    // 1. Chọn Hành Động (Epsilon-Greedy)
-    int chosenAction = 0;
-    if (random(0, 100) < (explorationRate * 100)) {
-      chosenAction = random(0, NUM_ACTIONS); // Khám phá ngẫu nhiên
-    } else {
-      // Khai thác kinh nghiệm tốt nhất
-      float maxQ = qTable[currentState][0];
-      chosenAction = 0;
-      for (int i = 1; i < NUM_ACTIONS; i++) {
-        if (qTable[currentState][i] > maxQ) {
-          maxQ = qTable[currentState][i];
-          chosenAction = i;
-        }
+      if (code >= 0 && code < NUM_ACTIONS) {
+        targetEmotionCode = code;
+        Serial.print(">> Chuyen sang trang thai: ");
+        Serial.println(code);
+      } else {
+        Serial.println("Loi: Ma cam xuc phai tu 0 den 10.");
       }
     }
-
-    // 2. Gửi lệnh cho Khuôn Mặt (Chạy trên Core 1)
-    targetEmotionCode = chosenAction;
-
-    // 3. Chờ xem phản ứng của môi trường
-    int delayTime = (chosenAction == 3) ? random(4000, 8000) : random(2000, 4000);
-    vTaskDelay(pdMS_TO_TICKS(delayTime)); 
-
-    // 4. Nhận lại kết quả và Học
-    readMockSensors();
-    int stateAfterAction = getStateIndex(currentTemp, currentSound, currentTouch);
-    float reward = calculateReward(currentState, chosenAction);
-    
-    learn(currentState, chosenAction, reward, stateAfterAction);
-    currentState = stateAfterAction;
-    
-    // Giảm dần tỷ lệ khám phá (Trưởng thành theo thời gian)
-    if (explorationRate > 0.05f) explorationRate -= 0.001f;
+    vTaskDelay(pdMS_TO_TICKS(100)); // Quét Serial mỗi 100ms
   }
 }
 // ==========================================
