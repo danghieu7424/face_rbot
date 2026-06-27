@@ -129,9 +129,9 @@ uint32_t lerpColor(uint32_t from, uint32_t to, float t);
 void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth);
 #line 425 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 536 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 548 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 568 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 580 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 112 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -402,7 +402,7 @@ void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, f
   }
 }
 
-void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f) {
+void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f, float extraAngle = 0.0f) {
   eyeSprite.fillSprite(TFT_BLACK);
   float pivotX = 60, pivotY = 60;
   eyeSprite.setPivot(pivotX, pivotY);
@@ -443,7 +443,7 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
 
   // Xoay và in ra màn hình
   canvasSprite.setPivot(centerX, centerY);
-  float angle = isRightEye ? -currentFace.eyeAngle : currentFace.eyeAngle;
+  float angle = isRightEye ? -(currentFace.eyeAngle + extraAngle) : (currentFace.eyeAngle + extraAngle);
   eyeSprite.pushRotated(&canvasSprite, angle, TFT_BLACK); 
 }
 
@@ -456,8 +456,8 @@ void renderToScreen() {
 
   // Hiệu ứng Chóng mặt (Dizzy): Xoay vòng vòng
   if (targetEmotionCode == 9) { 
-    effX += sin(millis() / 150.0f) * 15.0f;
-    effY += cos(millis() / 150.0f) * 15.0f;
+    effX += sin(millis() / 150.0f) * 8.0f; // Giảm biên độ quay
+    effY += cos(millis() / 150.0f) * 8.0f;
   }
 
   float eyeLx = 60 + effX;
@@ -468,26 +468,38 @@ void renderToScreen() {
   float leftEyeScale = 1.0f + (effX * 0.002f); 
   float rightEyeScale = 1.0f - (effX * 0.002f);
 
-  // Hiệu ứng Nháy mắt (Wink): Mắt trái từ từ nhắm tịt rồi mở ra
+  // Hiệu ứng Nháy mắt (Wink): Chờ bình thường -> Nghiêng đầu -> Nháy
   bool isWinking = (targetEmotionCode == 10);
   float oldBlink = blinkFactor;
+  float extraAngle = 0.0f;
   
   if (isWinking) {
     long elapsed = millis() - winkStartTime;
-    if (elapsed < 150) {
-      blinkFactor = 1.0f - (elapsed / 150.0f); // Mắt đang đóng xuống (0ms -> 150ms)
-    } else if (elapsed < 300) {
-      blinkFactor = (elapsed - 150) / 150.0f; // Mắt đang mở lên (150ms -> 300ms)
-    } else {
-      blinkFactor = 1.0f; // Nháy xong, trở lại bình thường
+    
+    // Giai đoạn 1 (0 -> 400ms): Chờ mắt interpolate về trạng thái bình thường (không làm gì)
+    // Giai đoạn 2 (400 -> 700ms): Nghiêng đầu
+    if (elapsed > 400 && elapsed <= 700) {
+      extraAngle = ((elapsed - 400) / 300.0f) * 15.0f; // Nghiêng 15 độ
+    } else if (elapsed > 700) {
+      extraAngle = 15.0f;
     }
+    
+    // Giai đoạn 3 (700 -> 1000ms): Nháy mắt
+    if (elapsed > 700 && elapsed <= 850) {
+      blinkFactor = 1.0f - ((elapsed - 700) / 150.0f); // Mắt đang đóng xuống
+    } else if (elapsed > 850 && elapsed <= 1000) {
+      blinkFactor = ((elapsed - 850) / 150.0f); // Mắt đang mở lên
+    } else if (elapsed > 1000) {
+      blinkFactor = 1.0f; // Nháy xong
+    }
+    
     if (blinkFactor < 0.05f) blinkFactor = 0.05f; // Guardrail tránh dẹp lép
   }
   
-  drawEye(eyeLx, eyeY, false, leftEyeScale); 
+  drawEye(eyeLx, eyeY, false, leftEyeScale, extraAngle); 
   
   if (isWinking) blinkFactor = oldBlink; // Mắt phải giữ nguyên trạng thái gốc
-  drawEye(eyeRx, eyeY, true, rightEyeScale);
+  drawEye(eyeRx, eyeY, true, rightEyeScale, extraAngle);
 
   // Hiệu ứng Khóc (Cry): Rơi nước mắt
   if (targetEmotionCode == 8) { 
