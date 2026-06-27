@@ -75,6 +75,134 @@ const FaceState stateDoubt     = {0, 35, 15,  5,  0, 4, 14,  4, 15, 2, 4,  25,  
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle;
 
+// Giao tiếp liên lõi (Inter-core Communication)
+volatile int targetEmotionCode = 7; // Mặc định là Idle (7)
+
+// ==========================================
+// HỆ THỐNG AI: Q-LEARNING & MOCK SENSORS
+// ==========================================
+
+// 1. Không gian trạng thái rời rạc (Quantized State Space)
+enum TempState { COLD = 0, NORMAL = 1, HOT = 2 };
+enum SoundState { QUIET = 0, NOISY = 1 };
+enum TouchState { UNTOUCHED = 0, TOUCHED = 1 };
+
+const int NUM_STATES = 3 * 2 * 2; // 12 Trạng thái
+const int NUM_ACTIONS = 8; // 8 Biểu cảm (Happy, Sad, Talk, Sleep, Angry, Surprised, Doubt, Idle)
+
+// 2. Q-Table (Bộ nhớ Kinh nghiệm)
+float qTable[NUM_STATES][NUM_ACTIONS] = {0.0}; 
+
+// 3. Siêu tham số Học tăng cường
+const float LEARNING_RATE = 0.1f;
+const float DISCOUNT_FACTOR = 0.9f;
+float explorationRate = 0.2f; // 20% khám phá ngẫu nhiên
+
+// 4. Biến môi trường giả lập (Mock Sensors)
+int currentTemp = NORMAL;
+int currentSound = QUIET;
+int currentTouch = UNTOUCHED;
+
+// Hàm chuyển đổi tổ hợp cảm biến thành 1 mã trạng thái (0-11)
+int getStateIndex(int temp, int sound, int touch) {
+  return temp * 4 + sound * 2 + touch;
+}
+
+// Hàm giả lập đọc cảm biến
+void readMockSensors() {
+  // Sinh ngẫu nhiên môi trường để AI có cái học
+  if (random(0, 100) < 5) currentTemp = random(0, 3);
+  if (random(0, 100) < 10) currentSound = random(0, 2);
+  if (random(0, 100) < 10) currentTouch = random(0, 2);
+}
+
+// Hàm tính phần thưởng (Reward Function) - Định hình tính cách Robot
+float calculateReward(int state, int action) {
+  float reward = 0.0f;
+  
+  // Tách trạng thái ngược lại từ State Index
+  int touch = state % 2;
+  int sound = (state / 2) % 2;
+  int temp = (state / 4) % 3;
+
+  // Tính cách 1: Thích được vuốt ve (Touch -> Happy/Talk: +1)
+  if (touch == TOUCHED) {
+    if (action == 0 || action == 2) reward += 2.0f; // Happy / Talk
+    else if (action == 4) reward -= 1.0f; // Nếu tức giận khi được vuốt -> Phạt
+  }
+
+  // Tính cách 2: Ghét ồn ào lúc ngủ (Noisy -> Sleep: Phạt nặng)
+  if (sound == NOISY) {
+    if (action == 3) reward -= 3.0f; // Đang ồn mà đi ngủ -> Phạt
+    if (action == 4 || action == 5) reward += 1.0f; // Tức giận / Ngạc nhiên khi ồn -> Thưởng
+  }
+
+  // Tính cách 3: Nóng nảy (Hot -> Angry: +1)
+  if (temp == HOT) {
+    if (action == 4) reward += 1.5f; // Nóng thì dễ cáu
+    if (action == 0) reward -= 1.0f; // Nóng mà vẫn Happy -> Hơi vô lý -> Phạt nhẹ
+  }
+
+  return reward;
+}
+
+// Thuật toán Bellman (Cập nhật Q-Table)
+void learn(int state, int action, float reward, int nextState) {
+  float maxFutureQ = qTable[nextState][0];
+  for (int i = 1; i < NUM_ACTIONS; i++) {
+    if (qTable[nextState][i] > maxFutureQ) {
+      maxFutureQ = qTable[nextState][i];
+    }
+  }
+  // Công thức cập nhật kinh nghiệm
+  qTable[state][action] = qTable[state][action] + LEARNING_RATE * (reward + DISCOUNT_FACTOR * maxFutureQ - qTable[state][action]);
+}
+
+// Task chạy trên Core 0 (Độc lập với Vẽ đồ họa)
+void AITask(void *pvParameters) {
+  int currentState = getStateIndex(currentTemp, currentSound, currentTouch);
+
+  for (;;) {
+    readMockSensors();
+    int nextState = getStateIndex(currentTemp, currentSound, currentTouch);
+
+    // 1. Chọn Hành Động (Epsilon-Greedy)
+    int chosenAction = 0;
+    if (random(0, 100) < (explorationRate * 100)) {
+      chosenAction = random(0, NUM_ACTIONS); // Khám phá ngẫu nhiên
+    } else {
+      // Khai thác kinh nghiệm tốt nhất
+      float maxQ = qTable[currentState][0];
+      chosenAction = 0;
+      for (int i = 1; i < NUM_ACTIONS; i++) {
+        if (qTable[currentState][i] > maxQ) {
+          maxQ = qTable[currentState][i];
+          chosenAction = i;
+        }
+      }
+    }
+
+    // 2. Gửi lệnh cho Khuôn Mặt (Chạy trên Core 1)
+    targetEmotionCode = chosenAction;
+
+    // 3. Chờ xem phản ứng của môi trường
+    int delayTime = (chosenAction == 3) ? random(4000, 8000) : random(2000, 4000);
+    vTaskDelay(pdMS_TO_TICKS(delayTime)); 
+
+    // 4. Nhận lại kết quả và Học
+    readMockSensors();
+    int stateAfterAction = getStateIndex(currentTemp, currentSound, currentTouch);
+    float reward = calculateReward(currentState, chosenAction);
+    
+    learn(currentState, chosenAction, reward, stateAfterAction);
+    currentState = stateAfterAction;
+    
+    // Giảm dần tỷ lệ khám phá (Trưởng thành theo thời gian)
+    if (explorationRate > 0.05f) explorationRate -= 0.001f;
+  }
+}
+// ==========================================
+
 float lerpSpeed = 0.3; 
 
 // --- OVERRIDE: BLINK MANAGER ---
@@ -357,53 +485,46 @@ void setup() {
     Serial.println("LỖI: Không thể tạo Eye Sprite!");
     while (1); 
   }
+
+  // Khởi chạy AI Task trên Core 0 (Priority 1)
+  xTaskCreatePinnedToCore(
+    AITask,       // Hàm thực thi
+    "AI_Task",    // Tên task
+    4096,         // Kích thước Stack
+    NULL,         // Tham số
+    1,            // Độ ưu tiên
+    NULL,         // Task handle
+    0             // Ghim vào Core 0
+  );
 }
 
 void loop() {
-  unsigned long now = millis();
-
-  if (now - lastUpdate >= 50) {
-    lastUpdate = now;
-    updateFaceLogic();
-    renderToScreen();
-  }
-
-  if (now - stateChangeTimer > nextStateDelay) {
-    stateChangeTimer = now;
-    
-    // Hệ thống Alive Behavior (Mô phỏng sự sống)
-    int randBehavior = random(0, 100);
-    
-    if (randBehavior < 60) {
-      // 60% thời gian: Rảnh rỗi, liếc nhìn ngẫu nhiên
-      targetFace = stateNormal;
-      targetFace.offsetX = random(-35, 36); // Liếc sang 2 bên
-      targetFace.offsetY = random(-15, 21); // Ngước lên / Cúi xuống
-      nextStateDelay = random(1000, 3000);  // Thay đổi điểm nhìn nhanh
-    } else {
-      // 40% thời gian: Thể hiện cảm xúc đa dạng
-      int emotion = random(0, 8); // 8 Trạng thái (0->7)
-      if (emotion == 0) targetFace = stateHappy;
-      else if (emotion == 1) targetFace = stateSad;
-      else if (emotion == 2) targetFace = stateTalk;
-      else if (emotion == 3) targetFace = stateSleep;
-      else if (emotion == 4) targetFace = stateAngry;
-      else if (emotion == 5) targetFace = stateSurprised;
-      else if (emotion == 6) targetFace = stateDoubt;
-      else targetFace = stateIdle;
-      
-      if (emotion == 3) {
-        nextStateDelay = random(5000, 10000); // Khi ngủ thì ngủ lâu hơn (5s - 10s)
-        
-        // Kích hoạt chuỗi hành động ngái ngủ (Drowsy Sequence)
-        sleepBlinkCount = 2; // Ép chớp mắt 2 lần liên tiếp
-        nextBlinkDelay = 200; // Bắt đầu chớp cái đầu tiên ngay lập tức
+  // Đọc lệnh cảm xúc từ AI Task
+  switch (targetEmotionCode) {
+    case 0: targetFace = stateHappy; break;
+    case 1: targetFace = stateSad; break;
+    case 2: targetFace = stateTalk; break;
+    case 3: 
+      if (targetFace.eyeHeight != stateSleep.eyeHeight) {
+        sleepBlinkCount = 2; 
+        nextBlinkDelay = 200; 
         lastBlinkTime = millis();
-      } else {
-        nextStateDelay = random(3000, 6000); // Các cảm xúc khác giữ ngắn hơn
       }
-    }
+      targetFace = stateSleep; 
+      break;
+    case 4: targetFace = stateAngry; break;
+    case 5: targetFace = stateSurprised; break;
+    case 6: targetFace = stateDoubt; break;
+    case 7: targetFace = stateIdle; break;
+    default: targetFace = stateNormal; break;
   }
+
+  // Cập nhật Logic & Render liên tục trên Core 1
+  updateFaceLogic();
+  renderToScreen();
+
+  // Nhường CPU cho FreeRTOS (Delay 50ms = 20 FPS ổn định)
+  vTaskDelay(pdMS_TO_TICKS(50));
 }
 
 
