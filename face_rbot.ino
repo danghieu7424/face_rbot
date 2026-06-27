@@ -1,28 +1,54 @@
+#include <TFT_eSPI.h> 
+
+// Khởi tạo đối tượng giao tiếp màn hình (Các chân SPI được cấu hình ngầm trong User_Setup.h của thư viện)
+TFT_eSPI tft = TFT_eSPI(); 
+
 /****
- * Chức năng: Khởi tạo và kiểm tra đèn LED trên GPIO01 kết hợp gửi dữ liệu debug qua Serial.
+ * Chức năng: Khởi tạo màn hình TFT và vẽ nội dung kiểm tra cơ bản.
  * Đầu vào: Không.
- * Đầu ra: Trạng thái bật/tắt LED và log Serial.
+ * Đầu ra: Màn hình TFT khởi động, đổ màu nền và in text xác nhận giao tiếp SPI thành công.
  ****/
 void setup() {
-  // Cấu hình Serial với tốc độ baud 115200 (phù hợp với mặc định của `cargo espflash monitor`)
+  // Cấu hình Serial baudrate 115200 (Đảm bảo đồng bộ với cấu hình nạp và cargo monitor)
   Serial.begin(115200);
   
-  // Khởi tạo chân GPIO01 làm ngõ ra điều khiển LED (căn cứ theo cấu hình phần cứng thử nghiệm)
-  pinMode(1, OUTPUT); 
+  // Bắt đầu khởi tạo quy trình IC điều khiển màn hình
+  tft.init();
+  
+  // Xoay màn hình 90 độ (Lưu ý: Hướng xoay phụ thuộc vào thiết kế cơ khí cố định màn hình)
+  tft.setRotation(1);
+  
+  // Xóa rác bộ đệm hiển thị, đặt màn hình đen chuẩn bị test
+  tft.fillScreen(TFT_BLACK);
+  
+  // Cài đặt hiển thị chữ trắng, nền đen chống răng cưa
+  tft.setTextColor(TFT_WHITE, TFT_BLACK);
+  
+  tft.drawString("TFT_eSPI Test OK!", 10, 10, 4); 
 }
 
 /****
- * Chức năng: Vòng lặp chính đảo trạng thái LED liên tục để kiểm tra mạch.
+ * Chức năng: Vòng lặp chính đảo màu màn hình để kiểm tra Tần số quét (Refresh Rate) và Điểm ảnh chết (Dead Pixel).
  * Đầu vào: Không.
- * Đầu ra: Chuyển đổi trạng thái HIGH/LOW trên chân GPIO01 và in log.
+ * Đầu ra: Màn hình chớp đổi màu RGB theo chu kỳ 1 giây và log trạng thái ra Serial.
  ****/
 void loop() {
-  digitalWrite(1, HIGH);
-  Serial.println("LED ON - GPIO01");
-  // Độ trễ 1000ms để quan sát trực quan bằng mắt (chu kỳ chuẩn test)
+  // Fill màu Đỏ (Phục vụ quá trình QA kiểm tra hở sáng hoặc Dead Pixel mảng Đỏ)
+  tft.fillScreen(TFT_RED);
+  tft.drawString("TEST RED", 10, 50, 4);
+  Serial.println("TFT - RED");
   delay(1000);
   
-  digitalWrite(1, LOW);
-  Serial.println("LED OFF - GPIO01");
+  // Fill màu Xanh Lá
+  tft.fillScreen(TFT_GREEN);
+  tft.drawString("TEST GREEN", 10, 50, 4);
+  Serial.println("TFT - GREEN");
+  delay(1000);
+  
+  // Fill màu Xanh Dương
+  tft.fillScreen(TFT_BLUE);
+  tft.drawString("TEST BLUE", 10, 50, 4);
+  Serial.println("TFT - BLUE");
   delay(1000);
 }
+
