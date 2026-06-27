@@ -99,84 +99,84 @@ uint32_t lerpColor(uint32_t from, uint32_t to, float t) {
   return tft.color565(r, g, b);
 }
 
-// Hàm vẽ Hình học Bất đối xứng (Primitive CSS border-radius algorithm)
-void drawAsymmetricRect(LGFX_Sprite* spr, float x, float y, float w, float h, float shapeType, uint32_t color, bool isMouth) {
+// Thuật toán Scanline Rasterization vẽ bo góc Elip bất đối xứng + Gradient Dọc (VGradient) siêu mượt
+void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth) {
   float rTL_x=0, rTL_y=0, rTR_x=0, rTR_y=0, rBR_x=0, rBR_y=0, rBL_x=0, rBL_y=0;
   
   if (!isMouth) {
     int type = (int)(shapeType + 0.5);
     float r = currentFace.eyeRadius;
-    if (type == 0) { // Oval chuẩn
+    if (type == 0) { 
       rTL_x = rTL_y = rTR_x = rTR_y = rBR_x = rBR_y = rBL_x = rBL_y = r;
-    } else if (type == 1) { // Bán nguyệt trên (50% 50% 10% 10% / 100% 100% 10% 10%)
+    } else if (type == 1) { // Bán nguyệt trên
       rTL_x = rTR_x = w/2; rTL_y = rTR_y = h/2;
       rBL_x = rBR_x = w*0.1; rBL_y = rBR_y = h*0.1;
     } else if (type == 2) { // Bán nguyệt dưới
       rTL_x = rTR_x = w*0.1; rTL_y = rTR_y = h*0.1;
       rBL_x = rBR_x = w/2; rBL_y = rBR_y = h/2;
-    } else if (type == 3) { // Oval đáy phẳng
+    } else if (type == 3) { // Oval phẳng đáy
       rTL_x = rTR_x = w/2; rTL_y = rTR_y = h/2;
       rBL_x = rBR_x = w*0.2; rBL_y = rBR_y = h*0.2;
     }
   } else {
-    // CSS Miệng: 15% 15% 50% 50% / 15% 15% 100% 100%
+    // Miệng: 15% 15% 50% 50% / 15% 15% 100% 100%
     rTL_x = rTR_x = w * 0.15; rTL_y = rTR_y = h * 0.15;
     rBL_x = rBR_x = w * 0.5;  rBL_y = rBR_y = h * 1.0;
   }
 
-  // Chống tràn bán kính (Limit Radius)
+  // Chống tràn bán kính
   if (rTL_x > w/2) rTL_x = w/2; if (rTR_x > w/2) rTR_x = w/2;
   if (rBL_x > w/2) rBL_x = w/2; if (rBR_x > w/2) rBR_x = w/2;
   if (rTL_y > h/2) rTL_y = h/2; if (rTR_y > h/2) rTR_y = h/2;
   if (rBL_y > h) rBL_y = h; if (rBR_y > h) rBR_y = h; 
 
-  spr->setClipRect(x, y, w, h);
+  int startX = cx - w/2;
+  int startY = cy - h/2;
+  int H = (int)h;
+  int W = (int)w;
 
-  // Vẽ 4 góc bằng hình Elip
-  if(rTL_x > 0 && rTL_y > 0) spr->fillEllipse(x + rTL_x, y + rTL_y, rTL_x, rTL_y, color);
-  if(rTR_x > 0 && rTR_y > 0) spr->fillEllipse(x + w - rTR_x, y + rTR_y, rTR_x, rTR_y, color);
-  if(rBR_x > 0 && rBR_y > 0) spr->fillEllipse(x + w - rBR_x, y + h - rBR_y, rBR_x, rBR_y, color);
-  if(rBL_x > 0 && rBL_y > 0) spr->fillEllipse(x + rBL_x, y + h - rBL_y, rBL_x, rBL_y, color);
+  // Render từng dòng ngang (Scanline)
+  for (int y = 0; y < H; y++) {
+    float x_start = 0;
+    float x_end = W - 1;
 
-  // Vẽ 2 khối chữ nhật chữ thập để nối các góc
-  spr->fillRect(x + rTL_x, y, w - rTL_x - rTR_x, h, color);
-  float maxYTop = (rTL_y > rTR_y) ? rTL_y : rTR_y;
-  float maxYBot = (rBL_y > rBR_y) ? rBL_y : rBR_y;
-  spr->fillRect(x, y + maxYTop, w, h - maxYTop - maxYBot + 1, color);
-
-  spr->clearClipRect();
-}
-
-// Hàm xử lý Alpha Blending Glow và Inner Shadow CSS
-void drawAdvancedGlowShadow(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, float glow, float innerShadow, uint32_t faceColor, bool isMouth) {
-  uint32_t glowBase = tft.color565(0, 100, 100);
-  
-  // 1. Vẽ Glow (box-shadow) bằng Alpha Blending (Vẽ đa giác từ to đến nhỏ)
-  int glowSteps = (int)glow;
-  if (glowSteps > 0) {
-    for (int i = glowSteps; i >= 1; i--) {
-      float t = (float)i / glowSteps; 
-      uint32_t c = lerpColor(TFT_BLACK, glowBase, t); // Fade to Black
-      drawAsymmetricRect(spr, cx - w/2 - i, cy - h/2 - i, w + i*2, h + i*2, shapeType, c, isMouth);
+    // Tính toán cắt góc Elip trên-trái
+    if (rTL_y > 0 && y < rTL_y) {
+      float dy = rTL_y - y;
+      float val = 1.0f - (dy * dy) / (rTL_y * rTL_y);
+      if (val < 0) val = 0;
+      x_start = rTL_x - (rTL_x * sqrt(val));
     }
-  }
-
-  // 2. Vẽ Inner Shadow (inset box-shadow offset -Y)
-  uint32_t shadowColor = tft.color565(0, 50, 50); // Màu đáy tối
-  drawAsymmetricRect(spr, cx - w/2, cy - h/2, w, h, shapeType, shadowColor, isMouth);
-
-  int shadowSteps = (int)innerShadow;
-  if (shadowSteps > 0) {
-    for (int i = 1; i <= shadowSteps; i++) {
-      float t = (float)i / shadowSteps; // Sáng dần lên faceColor
-      uint32_t c = lerpColor(shadowColor, faceColor, t);
-      // Dịch đa giác lên trên i pixel để tạo khoảng tối ở đáy (Inset Y = -innerShadow)
-      float shrink = i * 0.5; // Thu nhỏ nhẹ để không tràn hai bên viền
-      drawAsymmetricRect(spr, cx - w/2 + shrink, cy - h/2 - i + shrink/2, w - shrink*2, h - i, shapeType, c, isMouth);
+    // Tính toán cắt góc Elip trên-phải
+    if (rTR_y > 0 && y < rTR_y) {
+      float dy = rTR_y - y;
+      float val = 1.0f - (dy * dy) / (rTR_y * rTR_y);
+      if (val < 0) val = 0;
+      x_end = W - 1 - (rTR_x - (rTR_x * sqrt(val)));
     }
-  } else {
-    // Không có shadow thì vẽ luôn màu chính đè lên
-    drawAsymmetricRect(spr, cx - w/2, cy - h/2, w, h, shapeType, faceColor, isMouth);
+    // Tính toán cắt góc Elip dưới-trái
+    if (rBL_y > 0 && y >= H - rBL_y) {
+      float dy = y - (H - rBL_y) + 1;
+      float val = 1.0f - (dy * dy) / (rBL_y * rBL_y);
+      if (val < 0) val = 0;
+      x_start = rBL_x - (rBL_x * sqrt(val));
+    }
+    // Tính toán cắt góc Elip dưới-phải
+    if (rBR_y > 0 && y >= H - rBR_y) {
+      float dy = y - (H - rBR_y) + 1;
+      float val = 1.0f - (dy * dy) / (rBR_y * rBR_y);
+      if (val < 0) val = 0;
+      x_end = W - 1 - (rBR_x - (rBR_x * sqrt(val)));
+    }
+
+    // Nội suy màu Gradient cho dòng hiện tại
+    float t = (H > 1) ? (float)y / (H - 1) : 0;
+    uint32_t color = lerpColor(colorTop, colorBot, t);
+
+    // Vẽ dòng ngang cực nhanh bằng phần cứng
+    if (x_end >= x_start) {
+      spr->drawFastHLine(startX + x_start, startY + y, x_end - x_start + 1, color);
+    }
   }
 }
 
@@ -185,23 +185,29 @@ void drawEye(float centerX, float centerY, bool isRightEye) {
   float pivotX = 60, pivotY = 60;
   eyeSprite.setPivot(pivotX, pivotY);
 
-  drawAdvancedGlowShadow(&eyeSprite, pivotX, pivotY, currentFace.eyeWidth, currentFace.eyeHeight, currentFace.eyeShapeType, currentFace.glowSize, currentFace.innerShadow, tft.color565(0, 255, 255), false);
+  // Gradient từ Xanh Lơ (Cyan) đến Xanh Đậm (Deep Blue)
+  uint32_t colorTop = tft.color565(0, 255, 255); 
+  uint32_t colorBot = tft.color565(0, 50, 200);  
+
+  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY, currentFace.eyeWidth, currentFace.eyeHeight, currentFace.eyeShapeType, colorTop, colorBot, false);
 
   canvasSprite.setPivot(centerX, centerY);
   float angle = isRightEye ? -currentFace.eyeAngle : currentFace.eyeAngle;
-  eyeSprite.pushRotated(&canvasSprite, angle, TFT_BLACK); // Xoay lượng giác Sub-Sprite
+  eyeSprite.pushRotated(&canvasSprite, angle, TFT_BLACK); 
 }
 
 void renderToScreen() {
   canvasSprite.fillSprite(tft.color565(0, 0, 0));
 
-  drawEye(60, 90, false); // Trái
-  drawEye(180, 90, true); // Phải
+  drawEye(60, 90, false); 
+  drawEye(180, 90, true); 
 
   if (currentFace.mouthHeight > 0.5) {
     float mouthX = 120;
     float mouthY = 125;
-    drawAdvancedGlowShadow(&canvasSprite, mouthX, mouthY, currentFace.mouthWidth, currentFace.mouthHeight, 0, currentFace.mouthGlowSize, currentFace.mouthInnerShadow, tft.color565(0, 255, 255), true);
+    uint32_t colorTop = tft.color565(0, 255, 255);
+    uint32_t colorBot = tft.color565(0, 50, 200);
+    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, currentFace.mouthWidth, currentFace.mouthHeight, 0, colorTop, colorBot, true);
   }
 
   canvasSprite.pushSprite(0, 0);
