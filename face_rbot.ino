@@ -80,6 +80,8 @@ FaceState targetFace = stateIdle;
 
 // Giao tiếp liên lõi (Inter-core Communication)
 volatile int targetEmotionCode = 7; // Mặc định là Idle (7)
+int lastEmotionCode = 7; // Dùng trên Core 1 để phát hiện chuyển đổi trạng thái
+unsigned long winkStartTime = 0;
 
 // ==========================================
 // HỆ THỐNG AI: Q-LEARNING & MOCK SENSORS
@@ -395,11 +397,24 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
   // Thu hẹp bề ngang (w - 4) để bóng không bị bè ra 2 bên góc, làm kích thước bóng nhỏ lại
   drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY, w - 4, h, shape, shadowColor, shadowColor, false);
 
-  // 2. GIẢI PHÁP CHUYỂN MÀU PHÂN LỚP (CONCENTRIC LAYERS)
-  // Thu hẹp khoảng cách các lớp (w-2, w-4) để viền tối mỏng lại, lõi sáng to ra
-  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 1, w,     h,     shape, colorBot, colorBot, false);
-  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 2, w - 2, h - 2, shape, colorMid, colorMid, false);
-  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 3, w - 4, h - 4, shape, colorTop, colorTop, false);
+  if (targetEmotionCode == 9) {
+    // 2. Vẽ Hiệu ứng Xoáy Thôi Miên (Hypnotic Spirals)
+    // Lấy màu Gốc từ colorTop, ép kiểu 16-bit và Swap-byte để chữa lỗi Endianness
+    uint16_t c = tft.color565((colorTop >> 16) & 0xFF, (colorTop >> 8) & 0xFF, colorTop & 0xFF);
+    uint32_t swappedColor = (c >> 8) | (c << 8);
+
+    float spin = millis() * 0.3f; // Tốc độ xoay
+    for (int r = 5; r < (w / 2) - 2; r += 6) {
+      // Vẽ vòng cung đứt khúc, góc lệch nhau tạo hình xoáy
+      eyeSprite.drawArc(pivotX, pivotY, r, r - 2, spin - r * 15, spin - r * 15 + 180, swappedColor);
+    }
+  } else {
+    // 2. GIẢI PHÁP CHUYỂN MÀU PHÂN LỚP (CONCENTRIC LAYERS)
+    // Thu hẹp khoảng cách các lớp (w-2, w-4) để viền tối mỏng lại, lõi sáng to ra
+    drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 1, w,     h,     shape, colorBot, colorBot, false);
+    drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 2, w - 2, h - 2, shape, colorMid, colorMid, false);
+    drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 3, w - 4, h - 4, shape, colorTop, colorTop, false);
+  }
 
   // Xoay và in ra màn hình
   canvasSprite.setPivot(centerX, centerY);
@@ -428,14 +443,25 @@ void renderToScreen() {
   float leftEyeScale = 1.0f + (effX * 0.002f); 
   float rightEyeScale = 1.0f - (effX * 0.002f);
 
-  // Hiệu ứng Nháy mắt (Wink): Mắt trái nhắm tịt
+  // Hiệu ứng Nháy mắt (Wink): Mắt trái từ từ nhắm tịt rồi mở ra
   bool isWinking = (targetEmotionCode == 10);
   float oldBlink = blinkFactor;
   
-  if (isWinking) blinkFactor = 0.05f; 
+  if (isWinking) {
+    long elapsed = millis() - winkStartTime;
+    if (elapsed < 150) {
+      blinkFactor = 1.0f - (elapsed / 150.0f); // Mắt đang đóng xuống (0ms -> 150ms)
+    } else if (elapsed < 300) {
+      blinkFactor = (elapsed - 150) / 150.0f; // Mắt đang mở lên (150ms -> 300ms)
+    } else {
+      blinkFactor = 1.0f; // Nháy xong, trở lại bình thường
+    }
+    if (blinkFactor < 0.05f) blinkFactor = 0.05f; // Guardrail tránh dẹp lép
+  }
+  
   drawEye(eyeLx, eyeY, false, leftEyeScale); 
   
-  if (isWinking) blinkFactor = oldBlink; // Mắt phải bình thường
+  if (isWinking) blinkFactor = oldBlink; // Mắt phải giữ nguyên trạng thái gốc
   drawEye(eyeRx, eyeY, true, rightEyeScale);
 
   // Hiệu ứng Khóc (Cry): Rơi nước mắt
@@ -540,6 +566,14 @@ void setup() {
 }
 
 void loop() {
+  // Nhận biết sự thay đổi cảm xúc từ AI Task
+  if (targetEmotionCode != lastEmotionCode) {
+    if (targetEmotionCode == 10) {
+      winkStartTime = millis(); // Reset đồng hồ đo Wink
+    }
+    lastEmotionCode = targetEmotionCode;
+  }
+
   // Đọc lệnh cảm xúc từ AI Task
   switch (targetEmotionCode) {
     case 0: targetFace = stateHappy; break;
