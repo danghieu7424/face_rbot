@@ -59,10 +59,8 @@ struct FaceState {
 
 // Khớp 100% với file HTML của user
 const FaceState stateNormal   = {0, 40, 50, 20, 7,  4, 14, 8,  40, 2, 4};
-const FaceState stateSmile    = {1, 45, 20, 20, 10, 4, 14, 25, 60, 2, 4}; 
 const FaceState stateIdle     = {0, 40, 50, 20, 7,  4, 14, 0,  0,  0, 0};  
-const FaceState stateTalkOpen = {0, 38, 62, 10, 5,  4, 14, 35, 35, 2, 4};
-const FaceState stateTalkClose= {0, 38, 62, 10, 5,  4, 14, 4,  35, 2, 4};
+
 
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle;
@@ -269,14 +267,12 @@ void loop() {
     renderToScreen();
   }
 
-  if (now - stateChangeTimer > 2500) {
+  if (now - stateChangeTimer > 5000) {
     stateChangeTimer = now;
-    currentStateIndex = (currentStateIndex + 1) % 4;
+    currentStateIndex = (currentStateIndex + 1) % 2;
     switch(currentStateIndex) {
       case 0: targetFace = stateNormal; break;
-      case 1: targetFace = stateSmile; break;
-      case 2: targetFace = stateTalkOpen; break;
-      case 3: targetFace = stateIdle; break;
+      case 1: targetFace = stateIdle; break;
     }
   }
 }
