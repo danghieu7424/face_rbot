@@ -96,7 +96,7 @@ enum SoundState { QUIET = 0, NOISY = 1 };
 enum TouchState { UNTOUCHED = 0, TOUCHED = 1 };
 
 const int NUM_STATES = 3 * 2 * 2; // 12 Trạng thái
-const int NUM_ACTIONS = 11; // 11 Biểu cảm (Happy, Sad, Talk, Sleep, Angry, Surprised, Doubt, Idle, Cry, Dizzy, Wink)
+const int NUM_ACTIONS = 13; // 13 Biểu cảm (Idle, Normal, Happy, Sad, Talk, Sleep, Angry, Surprised, Doubt, Cry, Dizzy, Wink, LookAround)
 
 // 2. Q-Table (Bộ nhớ Kinh nghiệm)
 float qTable[NUM_STATES][NUM_ACTIONS] = {0.0}; 
@@ -122,17 +122,17 @@ float calculateReward(int state, int action);
 void learn(int state, int action, float reward, int nextState);
 #line 168 "C:\\rust\\face_rbot\\face_rbot.ino"
 void AITask(void *pvParameters);
-#line 246 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 247 "C:\\rust\\face_rbot\\face_rbot.ino"
 void updateFaceLogic();
-#line 307 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 308 "C:\\rust\\face_rbot\\face_rbot.ino"
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
-#line 325 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 326 "C:\\rust\\face_rbot\\face_rbot.ino"
 void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth);
-#line 450 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 452 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 591 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 598 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 623 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 630 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 113 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -193,9 +193,10 @@ void learn(int state, int action, float reward, int nextState) {
 void AITask(void *pvParameters) {
   Serial.println("=========================================");
   Serial.println("AI DANG DUOC TAM DUNG DE DEBUG.");
-  Serial.println("Vui long nhap so tu 0 den 10 de doi mat:");
-  Serial.println("0:Happy 1:Sad 2:Talk 3:Sleep 4:Angry");
-  Serial.println("5:Surprised 6:Doubt 7:Idle 8:Cry 9:Dizzy 10:Wink");
+  Serial.println("Vui long nhap so tu 0 den 12 de doi mat:");
+  Serial.println("0:Idle 1:Normal 2:Happy 3:Sad 4:Talk 5:Sleep");
+  Serial.println("6:Angry 7:Surprised 8:Doubt 9:Cry 10:Dizzy");
+  Serial.println("11:Wink 12:LookAround");
   Serial.println("=========================================");
 
   // int currentState = getStateIndex(currentTemp, currentSound, currentTouch);
@@ -211,7 +212,7 @@ void AITask(void *pvParameters) {
         Serial.print(">> Chuyen sang trang thai: ");
         Serial.println(code);
       } else {
-        Serial.println("Loi: Ma cam xuc phai tu 0 den 10.");
+        Serial.println("Loi: Ma cam xuc phai tu 0 den 12.");
       }
     }
 
@@ -427,7 +428,7 @@ void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, f
   }
 }
 
-void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f, float extraAngle = 0.0f) {
+void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f, float extraAngle = 0.0f, float customBlink = -1.0f) {
   eyeSprite.fillSprite(TFT_BLACK);
   float pivotX = 60, pivotY = 60;
   eyeSprite.setPivot(pivotX, pivotY);
@@ -438,8 +439,9 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
   uint32_t colorBot    = 0x00D200; // (0, 210, 0)
   uint32_t shadowColor = 0x00C800; // (0, 200, 0)
 
+  float actualBlink = (customBlink >= 0.0f) ? customBlink : blinkFactor;
   float w = currentFace.eyeWidth * scale3D;
-  float h = currentFace.eyeHeight * blinkFactor * scale3D; // Áp dụng Blink Override & 3D Scale
+  float h = currentFace.eyeHeight * actualBlink * scale3D; // Áp dụng Blink Override & 3D Scale
   if (h < 4) h = 4; // Guardrail: tối thiểu 4 pixel để thuật toán vát góc không sập
   float shape = currentFace.eyeShapeType;
 
@@ -447,7 +449,7 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
   // Thu hẹp bề ngang (w - 4) để bóng không bị bè ra 2 bên góc, làm kích thước bóng nhỏ lại
   drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY, w - 4, h, shape, shadowColor, shadowColor, false);
 
-  if (targetEmotionCode == 9) {
+  if (targetEmotionCode == 10) {
     // 2. Vẽ Hiệu ứng Xoáy Thôi Miên (Hypnotic Spirals)
     // Lấy màu Gốc từ colorTop, ép kiểu 16-bit và Swap-byte để chữa lỗi Endianness
     uint16_t c = tft.color565((colorTop >> 16) & 0xFF, (colorTop >> 8) & 0xFF, colorTop & 0xFF);
@@ -479,10 +481,16 @@ void renderToScreen() {
   float effX = currentFace.offsetX;
   float effY = currentFace.offsetY;
 
-  // Hiệu ứng Chóng mặt (Dizzy): Xoay vòng vòng
-  if (targetEmotionCode == 9) { 
+  // Hiệu ứng Chóng mặt (Dizzy - Code 10): Xoay vòng vòng
+  if (targetEmotionCode == 10) { 
     effX += sin(millis() / 150.0f) * 8.0f; // Giảm biên độ quay
     effY += cos(millis() / 150.0f) * 8.0f;
+  }
+  
+  // Nhìn xung quanh (LookAround - Code 12)
+  if (targetEmotionCode == 12) {
+    if ((millis() / 2000) % 2 == 0) effX -= 30.0f; // Liếc trái
+    else effX += 30.0f; // Liếc phải
   }
 
   float eyeLx = 60 + effX;
@@ -493,33 +501,34 @@ void renderToScreen() {
   float leftEyeScale = 1.0f + (effX * 0.002f); 
   float rightEyeScale = 1.0f - (effX * 0.002f);
 
-  // Hiệu ứng Ngủ (Sleep): Nháy mắt 2 lần trước khi nhắm hẳn
-  if (targetEmotionCode == 3) {
+  float leftBlink = -1.0f;
+  float rightBlink = -1.0f;
+
+  // Hiệu ứng Ngủ (Sleep - Code 5): Nháy mắt 2 lần trước khi nhắm hẳn
+  if (targetEmotionCode == 5) {
     long elapsed = millis() - sleepStartTime;
     // Nháy lần 1: 0 -> 300ms
-    if (elapsed < 150) blinkFactor = 1.0f - (elapsed / 150.0f);
-    else if (elapsed < 300) blinkFactor = (elapsed - 150) / 150.0f;
+    if (elapsed < 150) { leftBlink = rightBlink = 1.0f - (elapsed / 150.0f); }
+    else if (elapsed < 300) { leftBlink = rightBlink = (elapsed - 150) / 150.0f; }
     // Nháy lần 2: 300 -> 600ms
-    else if (elapsed < 450) blinkFactor = 1.0f - ((elapsed - 300) / 150.0f);
-    else if (elapsed < 600) blinkFactor = (elapsed - 450) / 150.0f;
+    else if (elapsed < 450) { leftBlink = rightBlink = 1.0f - ((elapsed - 300) / 150.0f); }
+    else if (elapsed < 600) { leftBlink = rightBlink = (elapsed - 450) / 150.0f; }
     
-    // Từ 600ms trở đi, updateFaceLogic sẽ tự lo phần nhắm tịt (interpolation)
-    if (elapsed < 600 && blinkFactor < 0.05f) blinkFactor = 0.05f;
+    // Từ 600ms trở đi, updateFaceLogic sẽ tự lo phần nhắm tịt. Guardrail tránh dẹp lép.
+    if (elapsed < 600 && leftBlink < 0.05f && leftBlink >= 0.0f) { leftBlink = rightBlink = 0.05f; }
   }
 
-  // Hiệu ứng Nháy mắt (Wink): Liếc mắt sang phải -> Nháy
-  bool isWinking = (targetEmotionCode == 10);
-  float oldBlink = blinkFactor;
-  
-  if (isWinking) {
+  // Hiệu ứng Nháy mắt (Wink - Code 11): Liếc mắt sang trái rồi nháy mắt phải, sau đó trôi về
+  if (targetEmotionCode == 11) {
     long elapsed = millis() - winkStartTime;
     
-    // Giai đoạn 1 (0 -> 400ms): Liếc mắt sang phải (Tăng effX)
+    // Giai đoạn 1 (0 -> 400ms): Liếc mắt sang trái (Giảm effX)
     if (elapsed <= 400) {
-      effX += ((float)elapsed / 400.0f) * 40.0f; // Liếc qua phải 40px
-    } else if (elapsed > 400) {
-      effX += 40.0f; // Giữ nguyên vị trí liếc
+      effX -= ((float)elapsed / 400.0f) * 40.0f; // Liếc qua trái 40px
+    } else if (elapsed > 400 && elapsed <= 1000) {
+      effX -= 40.0f; // Giữ nguyên vị trí liếc trái
     }
+    // Giai đoạn > 1000ms: effX tự động không bị trừ nữa, mắt trở về giữa
     
     // Tính lại tọa độ mắt Lx, Rx vì effX vừa bị thay đổi
     eyeLx = 60 + effX;
@@ -527,25 +536,23 @@ void renderToScreen() {
     leftEyeScale = 1.0f + (effX * 0.002f); 
     rightEyeScale = 1.0f - (effX * 0.002f);
     
-    // Giai đoạn 2 (400 -> 700ms): Nháy mắt trái
+    // Giai đoạn 2 (400 -> 700ms): Nháy MẮT PHẢI (rightBlink)
     if (elapsed > 400 && elapsed <= 550) {
-      blinkFactor = 1.0f - ((elapsed - 400) / 150.0f); // Mắt đang đóng xuống
+      rightBlink = 1.0f - ((elapsed - 400) / 150.0f); // Mắt phải đóng
     } else if (elapsed > 550 && elapsed <= 700) {
-      blinkFactor = ((elapsed - 550) / 150.0f); // Mắt đang mở lên
-    } else if (elapsed > 700) {
-      blinkFactor = 1.0f; // Nháy xong
+      rightBlink = ((elapsed - 550) / 150.0f); // Mắt phải mở
+    } else if (elapsed > 700 && elapsed <= 1000) {
+      rightBlink = 1.0f; // Nháy xong, chờ hết liếc
     }
     
-    if (blinkFactor < 0.05f) blinkFactor = 0.05f; // Guardrail tránh dẹp lép
+    if (rightBlink >= 0.0f && rightBlink < 0.05f) rightBlink = 0.05f; 
   }
   
-  drawEye(eyeLx, eyeY, false, leftEyeScale, 0.0f); 
-  
-  if (isWinking) blinkFactor = oldBlink; // Mắt phải giữ nguyên trạng thái gốc
-  drawEye(eyeRx, eyeY, true, rightEyeScale, 0.0f);
+  drawEye(eyeLx, eyeY, false, leftEyeScale, 0.0f, leftBlink); 
+  drawEye(eyeRx, eyeY, true, rightEyeScale, 0.0f, rightBlink);
 
-  // Hiệu ứng Khóc (Cry): Rơi nước mắt
-  if (targetEmotionCode == 8) { 
+  // Hiệu ứng Khóc (Cry - Code 9): Rơi nước mắt
+  if (targetEmotionCode == 9) { 
     float tearPhase = (millis() % 1500) / 1500.0f; // Vòng lặp 1.5s
     float tearY = eyeY + 25 + tearPhase * 20.0f; 
     float tearW = 8.0f * (1.0f - tearPhase); // Nhỏ dần
@@ -648,10 +655,10 @@ void setup() {
 void loop() {
   // Nhận biết sự thay đổi cảm xúc từ AI Task
   if (targetEmotionCode != lastEmotionCode) {
-    if (targetEmotionCode == 10) {
+    if (targetEmotionCode == 11) {
       winkStartTime = millis(); // Reset đồng hồ đo Wink
     }
-    if (targetEmotionCode == 3) {
+    if (targetEmotionCode == 5) {
       sleepStartTime = millis(); // Reset đồng hồ đo Sleep
     }
     lastEmotionCode = targetEmotionCode;
@@ -659,25 +666,20 @@ void loop() {
 
   // Đọc lệnh cảm xúc từ AI Task
   switch (targetEmotionCode) {
-    case 0: targetFace = stateHappy; break;
-    case 1: targetFace = stateSad; break;
-    case 2: targetFace = stateTalk; break;
-    case 3: 
-      if (targetFace.eyeHeight != stateSleep.eyeHeight) {
-        sleepBlinkCount = 2; 
-        nextBlinkDelay = 200; 
-        lastBlinkTime = millis();
-      }
-      targetFace = stateSleep; 
-      break;
-    case 4: targetFace = stateAngry; break;
-    case 5: targetFace = stateSurprised; break;
-    case 6: targetFace = stateDoubt; break;
-    case 7: targetFace = stateIdle; break;
-    case 8: targetFace = stateCry; break;
-    case 9: targetFace = stateDizzy; break;
-    case 10: targetFace = stateWink; break;
-    default: targetFace = stateNormal; break;
+    case 0: targetFace = stateIdle; break;
+    case 1: targetFace = stateNormal; break;
+    case 2: targetFace = stateHappy; break;
+    case 3: targetFace = stateSad; break;
+    case 4: targetFace = stateTalk; break;
+    case 5: targetFace = stateSleep; break;
+    case 6: targetFace = stateAngry; break;
+    case 7: targetFace = stateSurprised; break;
+    case 8: targetFace = stateDoubt; break;
+    case 9: targetFace = stateCry; break;
+    case 10: targetFace = stateDizzy; break;
+    case 11: targetFace = stateNormal; break; // Wink -> dùng nền Normal
+    case 12: targetFace = stateNormal; break; // LookAround -> dùng nền Normal
+    default: targetFace = stateIdle; break;
   }
 
   // Cập nhật Logic & Render liên tục trên Core 1
