@@ -141,25 +141,25 @@ void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, f
 
     // Cộng 0.5f để căn tâm Pixel, làm mượt viền
     if (rTL_y > 0 && y < rTL_y) {
-      float dy = rTL_y - y - 0.5f; 
+      float dy = rTL_y - y - 1.0f; 
       float val = 1.0f - (dy * dy) / (rTL_y * rTL_y);
       if (val < 0) val = 0;
       x_start = rTL_x - (rTL_x * sqrt(val));
     }
     if (rTR_y > 0 && y < rTR_y) {
-      float dy = rTR_y - y - 0.5f;
+      float dy = rTR_y - y - 1.0f;
       float val = 1.0f - (dy * dy) / (rTR_y * rTR_y);
       if (val < 0) val = 0;
       x_end = W - 1 - (rTR_x - (rTR_x * sqrt(val)));
     }
     if (rBL_y > 0 && y >= H - rBL_y) {
-      float dy = y - (H - rBL_y) + 0.5f;
+      float dy = y - (H - rBL_y) + 1.0f;
       float val = 1.0f - (dy * dy) / (rBL_y * rBL_y);
       if (val < 0) val = 0;
       x_start = rBL_x - (rBL_x * sqrt(val));
     }
     if (rBR_y > 0 && y >= H - rBR_y) {
-      float dy = y - (H - rBR_y) + 0.5f;
+      float dy = y - (H - rBR_y) + 1.0f;
       float val = 1.0f - (dy * dy) / (rBR_y * rBR_y);
       if (val < 0) val = 0;
       x_end = W - 1 - (rBR_x - (rBR_x * sqrt(val)));
@@ -181,9 +181,9 @@ void drawEye(float centerX, float centerY, bool isRightEye) {
 
   // ĐỊNH NGHĨA DẢI MÀU (Bảng màu tĩnh theo Hybrid FSD / Token Design)
   uint32_t colorTop = tft.color565(0, 220, 255);  // Lớp Tâm: Dịch xuống một chút (giảm độ chói/vibrancy)
-  uint32_t colorMid = tft.color565(0, 160, 255);  // Lớp Giữa: Xanh biển dịu
-  uint32_t colorBot = tft.color565(0, 100, 255);  // Lớp Đáy: Xanh dương sâu
-  uint32_t shadowColor = tft.color565(0, 20, 50); // Lớp Bóng giả: Tối và sâu
+  uint32_t colorMid = tft.color565(0, 200, 255);  // Lớp Giữa: Xanh biển dịu
+  uint32_t colorBot = tft.color565(0, 180, 255);  // Lớp Đáy: Xanh dương sâu
+  uint32_t shadowColor = tft.color565(0, 50, 150); // Lớp Bóng giả: Giảm độ sáng (bé lại)
 
   float w = currentFace.eyeWidth;
   float h = currentFace.eyeHeight;
@@ -219,9 +219,9 @@ void renderToScreen() {
     
     // Đồng bộ bảng màu với Mắt
     uint32_t colorTop = tft.color565(0, 220, 255);
-    uint32_t colorMid = tft.color565(0, 160, 255);
-    uint32_t colorBot = tft.color565(0, 100, 255);
-    uint32_t shadowColor = tft.color565(0, 20, 50);
+    uint32_t colorMid = tft.color565(0, 200, 255);
+    uint32_t colorBot = tft.color565(0, 180, 255);
+    uint32_t shadowColor = tft.color565(0, 50, 150);
 
     // Bóng giả cho Miệng
     drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, w, h, 0, shadowColor, shadowColor, true);
