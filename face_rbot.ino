@@ -99,14 +99,7 @@ uint32_t lerpColor(uint32_t from, uint32_t to, float t) {
   return tft.color565(r, g, b);
 }
 
-const uint8_t bayer4x4[4][4] = {
-  { 0,  8,  2, 10 },
-  { 12, 4, 14,  6 },
-  { 3, 11,  1,  9 },
-  { 15, 7, 13,  5 }
-};
-
-// Thuật toán Scanline Rasterization + Bayer Dithering (Khử vân ngang 16-bit)
+// Thuật toán Scanline Rasterization vẽ bo góc Elip bất đối xứng + Gradient Dọc (VGradient) siêu mượt
 void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth) {
   float rTL_x=0, rTL_y=0, rTR_x=0, rTR_y=0, rBR_x=0, rBR_y=0, rBL_x=0, rBL_y=0;
   
@@ -172,23 +165,11 @@ void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, f
       x_end = W - 1 - (rBR_x - (rBR_x * sqrt(val)));
     }
 
-    float t_base = (H > 1) ? (float)y / (H - 1) : 0;
-    
-    int px_start = startX + (int)x_start;
-    int px_end = startX + (int)x_end;
+    float t = (H > 1) ? (float)y / (H - 1) : 0;
+    uint32_t color = lerpColor(colorTop, colorBot, t);
 
-    // Render từng Pixel (Dithering) thay vì vẽ đường ngang
-    for (int x = px_start; x <= px_end; x++) {
-      float bayer_val = (float)bayer4x4[y % 4][x % 4] / 15.0f; 
-      // Cường độ nhiễu 0.08f (Đủ bù 3 bậc màu 16-bit)
-      float dither_offset = (bayer_val - 0.5f) * 0.08f; 
-      
-      float t = t_base + dither_offset;
-      if (t < 0.0f) t = 0.0f;
-      if (t > 1.0f) t = 1.0f;
-      
-      uint32_t color = lerpColor(colorTop, colorBot, t);
-      spr->drawPixel(x, startY + y, color);
+    if (x_end >= x_start) {
+      spr->drawFastHLine(startX + (int)x_start, startY + y, (int)(x_end - x_start + 1), color);
     }
   }
 }
@@ -199,8 +180,8 @@ void drawEye(float centerX, float centerY, bool isRightEye) {
   eyeSprite.setPivot(pivotX, pivotY);
 
   uint32_t colorTop = tft.color565(0, 255, 255); // Cyan (Màu lõi sáng)
-  uint32_t colorBot = tft.color565(0, 100, 200); // Deep Blue (Màu lõi tối tạo VGradient)
-  uint32_t shadowColor = tft.color565(0, 50, 100); // Dark Blue (Bóng tối giả nền)
+  uint32_t colorBot = tft.color565(0, 0, 255);   // Pure Blue (Kích hoạt 64 mức màu Xanh Lá)
+  uint32_t shadowColor = tft.color565(0, 0, 50); // Dark Blue (Bóng tối giả nền)
 
   float w = currentFace.eyeWidth;
   float h = currentFace.eyeHeight;
@@ -231,8 +212,8 @@ void renderToScreen() {
     float h = currentFace.mouthHeight;
     
     uint32_t colorTop = tft.color565(0, 255, 255);
-    uint32_t colorBot = tft.color565(0, 100, 200);
-    uint32_t shadowColor = tft.color565(0, 50, 100);
+    uint32_t colorBot = tft.color565(0, 0, 255);
+    uint32_t shadowColor = tft.color565(0, 0, 50);
 
     // Bóng giả cho Miệng
     drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, w, h, 0, shadowColor, shadowColor, true);
