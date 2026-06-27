@@ -172,6 +172,8 @@ void AITask(void *pvParameters) {
   Serial.println("5:Surprised 6:Doubt 7:Idle 8:Cry 9:Dizzy 10:Wink");
   Serial.println("=========================================");
 
+  // int currentState = getStateIndex(currentTemp, currentSound, currentTouch);
+
   for (;;) {
     if (Serial.available() > 0) {
       int code = Serial.parseInt();
@@ -186,6 +188,46 @@ void AITask(void *pvParameters) {
         Serial.println("Loi: Ma cam xuc phai tu 0 den 10.");
       }
     }
+
+    // --- ĐÃ COMMENT THUẬT TOÁN Q-LEARNING (Bỏ // để bật lại) ---
+    // readMockSensors();
+    // int nextState = getStateIndex(currentTemp, currentSound, currentTouch);
+    //
+    // // 1. Chọn Hành Động (Epsilon-Greedy)
+    // int chosenAction = 0;
+    // if (random(0, 100) < (explorationRate * 100)) {
+    //   chosenAction = random(0, NUM_ACTIONS); // Khám phá ngẫu nhiên
+    // } else {
+    //   // Khai thác kinh nghiệm tốt nhất
+    //   float maxQ = qTable[currentState][0];
+    //   chosenAction = 0;
+    //   for (int i = 1; i < NUM_ACTIONS; i++) {
+    //     if (qTable[currentState][i] > maxQ) {
+    //       maxQ = qTable[currentState][i];
+    //       chosenAction = i;
+    //     }
+    //   }
+    // }
+    //
+    // // 2. Gửi lệnh cho Khuôn Mặt (Chạy trên Core 1)
+    // targetEmotionCode = chosenAction;
+    //
+    // // 3. Chờ xem phản ứng của môi trường
+    // int delayTime = (chosenAction == 3) ? random(4000, 8000) : random(2000, 4000);
+    // vTaskDelay(pdMS_TO_TICKS(delayTime)); 
+    //
+    // // 4. Nhận lại kết quả và Học
+    // readMockSensors();
+    // int stateAfterAction = getStateIndex(currentTemp, currentSound, currentTouch);
+    // float reward = calculateReward(currentState, chosenAction);
+    // 
+    // learn(currentState, chosenAction, reward, stateAfterAction);
+    // currentState = stateAfterAction;
+    // 
+    // // Giảm dần tỷ lệ khám phá (Trưởng thành theo thời gian)
+    // if (explorationRate > 0.05f) explorationRate -= 0.001f;
+    // -------------------------------------------------------------
+
     vTaskDelay(pdMS_TO_TICKS(100)); // Quét Serial mỗi 100ms
   }
 }
@@ -202,11 +244,10 @@ int sleepBlinkCount = 0; // Đếm số lần chớp mắt lúc buồn ngủ
 
 void updateFaceLogic() {
   // Điều chỉnh tốc độ chuyển trạng thái (Animation Timing Tùy chỉnh)
-  float currentLerp = lerpSpeed; // Mặc định 0.3
-  
-  if (targetFace.eyeHeight == stateSleep.eyeHeight && currentFace.eyeHeight > 10) {
-    currentLerp = 0.03; // Ngủ: Sụp mí và gục đầu từ từ (khoảng 2 giây)
-  } 
+  float currentLerp = 0.1; // Default
+  if (targetFace.eyeHeight == stateSleep.eyeHeight) {
+    currentLerp = 0.25; // Ngủ: Nhanh hơn bình thường một chút
+  }
   else if (targetFace.eyeHeight == stateSurprised.eyeHeight) {
     currentLerp = 0.6;  // Ngạc nhiên: Giật bắn mình mở to mắt (Cực nhanh)
   }
@@ -214,7 +255,7 @@ void updateFaceLogic() {
     currentLerp = 0.4;  // Giận dữ: Quắc mắt dứt khoát
   }
   else if (targetFace.eyeHeight == stateDoubt.eyeHeight) {
-    currentLerp = 0.08; // Nghi ngờ: Từ từ híp mắt và liếc nhìn (Chậm rãi, nguy hiểm)
+    currentLerp = 0.25; // Nghi ngờ: Nhanh hơn (đã tăng tốc)
   }
 
   currentFace.eyeShapeType = targetFace.eyeShapeType; 
@@ -430,16 +471,19 @@ void renderToScreen() {
   bool isWinking = (targetEmotionCode == 10);
   float oldBlink = blinkFactor;
   float extraAngle = 0.0f;
+  float tiltYOffset = 0.0f; // Trục Y nghiêng đầu
   
   if (isWinking) {
     long elapsed = millis() - winkStartTime;
     
     // Giai đoạn 1 (0 -> 400ms): Chờ mắt interpolate về trạng thái bình thường (không làm gì)
-    // Giai đoạn 2 (400 -> 700ms): Nghiêng đầu
+    // Giai đoạn 2 (400 -> 700ms): Nghiêng cả cái đầu
     if (elapsed > 400 && elapsed <= 700) {
       extraAngle = ((elapsed - 400) / 300.0f) * 15.0f; // Nghiêng 15 độ
+      tiltYOffset = ((elapsed - 400) / 300.0f) * 20.0f; // Mắt lệch nhau 20px
     } else if (elapsed > 700) {
       extraAngle = 15.0f;
+      tiltYOffset = 20.0f;
     }
     
     // Giai đoạn 3 (700 -> 1000ms): Nháy mắt
@@ -454,10 +498,10 @@ void renderToScreen() {
     if (blinkFactor < 0.05f) blinkFactor = 0.05f; // Guardrail tránh dẹp lép
   }
   
-  drawEye(eyeLx, eyeY, false, leftEyeScale, extraAngle); 
+  drawEye(eyeLx, eyeY + tiltYOffset, false, leftEyeScale, extraAngle); 
   
   if (isWinking) blinkFactor = oldBlink; // Mắt phải giữ nguyên trạng thái gốc
-  drawEye(eyeRx, eyeY, true, rightEyeScale, extraAngle);
+  drawEye(eyeRx, eyeY - tiltYOffset, true, rightEyeScale, extraAngle);
 
   // Hiệu ứng Khóc (Cry): Rơi nước mắt
   if (targetEmotionCode == 8) { 
