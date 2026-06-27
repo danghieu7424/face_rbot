@@ -189,15 +189,15 @@ void drawEye(float centerX, float centerY, bool isRightEye) {
   float h = currentFace.eyeHeight;
   float shape = currentFace.eyeShapeType;
 
-  // 1. Vẽ Bóng Giả (Dark Blue) làm nền nguyên khối
-  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY, w, h, shape, shadowColor, shadowColor, false);
+  // 1. Vẽ Bóng Giả (Dark Blue) làm nền
+  // Thu hẹp bề ngang (w - 4) để bóng không bị bè ra 2 bên góc, làm kích thước bóng nhỏ lại
+  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY, w - 4, h, shape, shadowColor, shadowColor, false);
 
   // 2. GIẢI PHÁP CHUYỂN MÀU PHÂN LỚP (CONCENTRIC LAYERS)
-  // Đổ màu theo 3 lớp khối đặc chồng lên nhau để mô phỏng Gradient + Glow
-  // Tuyệt đối không xé sọc khi xoay (Anti-Moiré technique)
+  // Thu hẹp khoảng cách các lớp (w-2, w-4) để viền tối mỏng lại, lõi sáng to ra
   drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 1, w,     h,     shape, colorBot, colorBot, false);
-  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 2, w - 4, h - 4, shape, colorMid, colorMid, false);
-  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 3, w - 8, h - 8, shape, colorTop, colorTop, false);
+  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 2, w - 2, h - 2, shape, colorMid, colorMid, false);
+  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 3, w - 4, h - 4, shape, colorTop, colorTop, false);
 
   // Xoay và in ra màn hình
   canvasSprite.setPivot(centerX, centerY);
@@ -223,13 +223,13 @@ void renderToScreen() {
     uint32_t colorBot = tft.color565(0, 180, 255);
     uint32_t shadowColor = tft.color565(0, 50, 150);
 
-    // Bóng giả cho Miệng
-    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, w, h, 0, shadowColor, shadowColor, true);
+    // Bóng giả cho Miệng thu hẹp (w - 4)
+    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, w - 4, h, 0, shadowColor, shadowColor, true);
     
-    // Chuyển màu phân lớp cho Miệng (Kiểm tra an toàn: chỉ vẽ lớp trong khi đủ độ cao)
+    // Chuyển màu phân lớp cho Miệng (viền mỏng hơn)
     drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 1, w,     h,     0, colorBot, colorBot, true);
-    if (h > 4) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 2, w - 4, h - 4, 0, colorMid, colorMid, true);
-    if (h > 8) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 3, w - 8, h - 8, 0, colorTop, colorTop, true);
+    if (h > 2) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 2, w - 2, h - 2, 0, colorMid, colorMid, true);
+    if (h > 4) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 3, w - 4, h - 4, 0, colorTop, colorTop, true);
   }
 
   canvasSprite.pushSprite(0, 0);
