@@ -239,8 +239,8 @@ void renderToScreen() {
   float eyeY  = 90 + currentFace.offsetY;
 
   // Giả lập chiều sâu 3D (Parallax): Mắt ở hướng nhìn ngược lại sẽ to hơn
-  float leftEyeScale = 1.0f + (currentFace.offsetX * 0.005f); 
-  float rightEyeScale = 1.0f - (currentFace.offsetX * 0.005f);
+  float leftEyeScale = 1.0f + (currentFace.offsetX * 0.002f); 
+  float rightEyeScale = 1.0f - (currentFace.offsetX * 0.002f);
 
   drawEye(eyeLx, eyeY, false, leftEyeScale); 
   drawEye(eyeRx, eyeY, true, rightEyeScale);
@@ -251,6 +251,17 @@ void renderToScreen() {
     float w = currentFace.mouthWidth;
     float h = currentFace.mouthHeight;
     
+    // --- OVERRIDE: TALK ANIMATION (Mấp máy môi) ---
+    // Chỉ kích hoạt khi mục tiêu là trạng thái Nói (chiều cao miệng > 30)
+    if (targetFace.mouthHeight > 30) {
+      // Dùng 2 sóng sin lồng nhau để tạo nhịp điệu nói chuyện ngẫu nhiên, tự nhiên hơn
+      float talkPhase = millis() / 80.0f;
+      float talkFactor = 0.3f + 0.7f * abs(sin(talkPhase) * sin(talkPhase * 0.6f));
+      h = h * talkFactor;
+    }
+    
+    if (h < 2) h = 2; // Guardrail: giữ miệng không bị sập hoàn toàn
+
     // Đồng bộ bảng màu với Mắt
     uint32_t colorTop = tft.color565(0, 220, 255);
     uint32_t colorMid = tft.color565(0, 215, 255);
