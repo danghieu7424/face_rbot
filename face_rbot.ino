@@ -358,38 +358,29 @@ void loop() {
   if (now - stateChangeTimer > nextStateDelay) {
     stateChangeTimer = now;
     
-    // Hệ thống Alive Behavior (Mô phỏng sự sống)
-    int randBehavior = random(0, 100);
+    // CHẾ ĐỘ TRÌNH DIỄN (Demo Mode): Duyệt tuần tự qua các trạng thái để dễ kiểm tra
+    static int testState = 0;
     
-    if (randBehavior < 60) {
-      // 60% thời gian: Rảnh rỗi, liếc nhìn ngẫu nhiên
-      targetFace = stateNormal;
-      targetFace.offsetX = random(-35, 36); // Liếc sang 2 bên
-      targetFace.offsetY = random(-15, 21); // Ngước lên / Cúi xuống
-      nextStateDelay = random(1000, 3000);  // Thay đổi điểm nhìn nhanh
-    } else {
-      // 40% thời gian: Thể hiện cảm xúc đa dạng
-      int emotion = random(0, 8); // 8 Trạng thái (0->7)
-      if (emotion == 0) targetFace = stateHappy;
-      else if (emotion == 1) targetFace = stateSad;
-      else if (emotion == 2) targetFace = stateTalk;
-      else if (emotion == 3) targetFace = stateSleep;
-      else if (emotion == 4) targetFace = stateAngry;
-      else if (emotion == 5) targetFace = stateSurprised;
-      else if (emotion == 6) targetFace = stateDoubt;
-      else targetFace = stateIdle;
-      
-      if (emotion == 3) {
-        nextStateDelay = random(5000, 10000); // Khi ngủ thì ngủ lâu hơn (5s - 10s)
-        
-        // Kích hoạt chuỗi hành động ngái ngủ (Drowsy Sequence)
-        sleepBlinkCount = 2; // Ép chớp mắt 2 lần liên tiếp
-        nextBlinkDelay = 200; // Bắt đầu chớp cái đầu tiên ngay lập tức
-        lastBlinkTime = millis();
-      } else {
-        nextStateDelay = random(3000, 6000); // Các cảm xúc khác giữ ngắn hơn
-      }
+    if (testState == 0) targetFace = stateHappy;
+    else if (testState == 1) targetFace = stateSad;
+    else if (testState == 2) targetFace = stateTalk;
+    else if (testState == 3) {
+      targetFace = stateSleep;
+      // Kích hoạt chuỗi hành động ngái ngủ (Drowsy Sequence)
+      sleepBlinkCount = 2; 
+      nextBlinkDelay = 200; 
+      lastBlinkTime = millis();
     }
+    else if (testState == 4) targetFace = stateAngry;
+    else if (testState == 5) targetFace = stateSurprised;
+    else if (testState == 6) targetFace = stateDoubt;
+    else if (testState == 7) {
+      targetFace = stateNormal;
+      targetFace.offsetX = random(-30, 31); // Kèm liếc nhìn
+    }
+
+    testState = (testState + 1) % 8;
+    nextStateDelay = 4000; // Cố định mỗi 4 giây đổi 1 biểu cảm
   }
 }
 
