@@ -73,6 +73,12 @@ FaceState targetFace = stateIdle;
 
 float lerpSpeed = 0.3; 
 
+// --- OVERRIDE: BLINK MANAGER ---
+float blinkFactor = 1.0;
+float targetBlinkFactor = 1.0;
+unsigned long lastBlinkTime = 0;
+unsigned long nextBlinkDelay = 3000;
+
 void updateFaceLogic() {
   currentFace.eyeShapeType = targetFace.eyeShapeType; 
   currentFace.eyeWidth    += (targetFace.eyeWidth    - currentFace.eyeWidth)    * lerpSpeed;
@@ -87,6 +93,18 @@ void updateFaceLogic() {
   currentFace.mouthInnerShadow += (targetFace.mouthInnerShadow - currentFace.mouthInnerShadow) * lerpSpeed;
   currentFace.offsetX     += (targetFace.offsetX     - currentFace.offsetX)     * lerpSpeed;
   currentFace.offsetY     += (targetFace.offsetY     - currentFace.offsetY)     * lerpSpeed;
+
+  // Xử lý Blink Override độc lập (Không làm hỏng State gốc)
+  unsigned long now = millis();
+  if (now - lastBlinkTime > nextBlinkDelay) {
+    targetBlinkFactor = 0.05; // Ép chiều cao về 5%
+    if (now - lastBlinkTime > nextBlinkDelay + 150) { // Giữ mắt nhắm trong 150ms
+      targetBlinkFactor = 1.0; // Mở mắt
+      lastBlinkTime = now;
+      nextBlinkDelay = random(2000, 6000); // Ngẫu nhiên 2s đến 6s
+    }
+  }
+  blinkFactor += (targetBlinkFactor - blinkFactor) * 0.5; // Tốc độ chớp cực nhanh (0.5 > 0.3)
 }
 
 uint32_t lerpColor(uint32_t from, uint32_t to, float t) {
@@ -192,7 +210,8 @@ void drawEye(float centerX, float centerY, bool isRightEye) {
   uint32_t shadowColor = tft.color565(0, 200, 255); // Lớp Bóng giả: Giảm độ sáng (bé lại)
 
   float w = currentFace.eyeWidth;
-  float h = currentFace.eyeHeight;
+  float h = currentFace.eyeHeight * blinkFactor; // Áp dụng Blink Override
+  if (h < 4) h = 4; // Guardrail: tối thiểu 4 pixel để thuật toán vát góc không sập
   float shape = currentFace.eyeShapeType;
 
   // 1. Vẽ Bóng Giả (Dark Blue) làm nền
