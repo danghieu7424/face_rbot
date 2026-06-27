@@ -159,7 +159,8 @@ uint32_t lerpColor(uint32_t from, uint32_t to, float t) {
   uint8_t g = g1 + (g2 - g1) * t;
   uint8_t b = b1 + (b2 - b1) * t;
 
-  return tft.color565(r, g, b); // Chỉ convert sang 565 ở bước cuối cùng khi vẽ
+  uint16_t c = tft.color565(r, g, b);
+  return (uint32_t)((c >> 8) | (c << 8)); // Đảo byte (Endianness Swap) để chống lại lỗi hiển thị ngược của SPI LCD
 }
 
 // Thuật toán Scanline Rasterization vẽ bo góc Elip bất đối xứng + Gradient Dọc (VGradient) siêu mượt
