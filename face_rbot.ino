@@ -198,7 +198,7 @@ void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, f
   }
 }
 
-void drawEye(float centerX, float centerY, bool isRightEye) {
+void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f) {
   eyeSprite.fillSprite(TFT_BLACK);
   float pivotX = 60, pivotY = 60;
   eyeSprite.setPivot(pivotX, pivotY);
@@ -209,8 +209,8 @@ void drawEye(float centerX, float centerY, bool isRightEye) {
   uint32_t colorBot = tft.color565(0, 210, 255);  // Lớp Đáy: Xanh dương sâu
   uint32_t shadowColor = tft.color565(0, 200, 255); // Lớp Bóng giả: Giảm độ sáng (bé lại)
 
-  float w = currentFace.eyeWidth;
-  float h = currentFace.eyeHeight * blinkFactor; // Áp dụng Blink Override
+  float w = currentFace.eyeWidth * scale3D;
+  float h = currentFace.eyeHeight * blinkFactor * scale3D; // Áp dụng Blink Override & 3D Scale
   if (h < 4) h = 4; // Guardrail: tối thiểu 4 pixel để thuật toán vát góc không sập
   float shape = currentFace.eyeShapeType;
 
@@ -238,8 +238,12 @@ void renderToScreen() {
   float eyeRx = 180 + currentFace.offsetX;
   float eyeY  = 90 + currentFace.offsetY;
 
-  drawEye(eyeLx, eyeY, false); 
-  drawEye(eyeRx, eyeY, true); 
+  // Giả lập chiều sâu 3D (Parallax): Mắt ở hướng nhìn ngược lại sẽ to hơn
+  float leftEyeScale = 1.0f + (currentFace.offsetX * 0.005f); 
+  float rightEyeScale = 1.0f - (currentFace.offsetX * 0.005f);
+
+  drawEye(eyeLx, eyeY, false, leftEyeScale); 
+  drawEye(eyeRx, eyeY, true, rightEyeScale);
 
   if (currentFace.mouthHeight > 0.5) {
     float mouthX = 120 + currentFace.offsetX;
