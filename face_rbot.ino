@@ -71,6 +71,9 @@ const FaceState stateSleep     = {0, 40,  7,  3,  0, 4, 14,  0,  0, 0, 0,   0,  
 const FaceState stateAngry     = {0, 40, 25, 10, 25, 4, 14,  5, 40, 2, 4,   0,   5}; // Mắt dẹt, góc nghiêng gắt, miệng rộng và bẹt
 const FaceState stateSurprised = {0, 50, 60, 25,  0, 4, 14, 40, 25, 2, 4,   0, -15}; // Mắt mở to tròn, miệng chữ O dài, đầu giật lên
 const FaceState stateDoubt     = {0, 35, 15,  5,  0, 4, 14,  4, 15, 2, 4,  25,   5}; // Mắt híp (squint), liếc sang một bên nghi ngờ
+const FaceState stateCry       = {0, 35, 20, 10,-15, 4, 14, 10, 20, 2, 4,   0,  10}; // Mắt nheo xuống, mếu máo
+const FaceState stateDizzy     = {0, 40, 50, 20,  0, 4, 14, 20, 20, 2, 4,   0,   0}; // Hình dáng bình thường nhưng sẽ quay vòng vòng
+const FaceState stateWink      = {0, 40, 50, 20,  7, 4, 14, 15, 40, 2, 4,   0,   0}; // Một mắt nhắm một mắt mở (xử lý logic riêng)
 
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle;
@@ -88,7 +91,7 @@ enum SoundState { QUIET = 0, NOISY = 1 };
 enum TouchState { UNTOUCHED = 0, TOUCHED = 1 };
 
 const int NUM_STATES = 3 * 2 * 2; // 12 Trạng thái
-const int NUM_ACTIONS = 8; // 8 Biểu cảm (Happy, Sad, Talk, Sleep, Angry, Surprised, Doubt, Idle)
+const int NUM_ACTIONS = 11; // 11 Biểu cảm (Happy, Sad, Talk, Sleep, Angry, Surprised, Doubt, Idle, Cry, Dizzy, Wink)
 
 // 2. Q-Table (Bộ nhớ Kinh nghiệm)
 float qTable[NUM_STATES][NUM_ACTIONS] = {0.0}; 
@@ -408,16 +411,54 @@ void renderToScreen() {
   canvasSprite.fillSprite(tft.color565(0, 0, 0));
 
   // Áp dụng offsetX, offsetY để mô phỏng trục xoay cổ
-  float eyeLx = 60 + currentFace.offsetX;
-  float eyeRx = 180 + currentFace.offsetX;
-  float eyeY  = 90 + currentFace.offsetY;
+  float effX = currentFace.offsetX;
+  float effY = currentFace.offsetY;
+
+  // Hiệu ứng Chóng mặt (Dizzy): Xoay vòng vòng
+  if (targetEmotionCode == 9) { 
+    effX += sin(millis() / 150.0f) * 15.0f;
+    effY += cos(millis() / 150.0f) * 15.0f;
+  }
+
+  float eyeLx = 60 + effX;
+  float eyeRx = 180 + effX;
+  float eyeY  = 90 + effY;
 
   // Giả lập chiều sâu 3D (Parallax): Mắt ở hướng nhìn ngược lại sẽ to hơn
-  float leftEyeScale = 1.0f + (currentFace.offsetX * 0.002f); 
-  float rightEyeScale = 1.0f - (currentFace.offsetX * 0.002f);
+  float leftEyeScale = 1.0f + (effX * 0.002f); 
+  float rightEyeScale = 1.0f - (effX * 0.002f);
 
+  // Hiệu ứng Nháy mắt (Wink): Mắt trái nhắm tịt
+  bool isWinking = (targetEmotionCode == 10);
+  float oldBlink = blinkFactor;
+  
+  if (isWinking) blinkFactor = 0.05f; 
   drawEye(eyeLx, eyeY, false, leftEyeScale); 
+  
+  if (isWinking) blinkFactor = oldBlink; // Mắt phải bình thường
   drawEye(eyeRx, eyeY, true, rightEyeScale);
+
+  // Hiệu ứng Khóc (Cry): Rơi nước mắt
+  if (targetEmotionCode == 8) { 
+    float tearPhase = (millis() % 1500) / 1500.0f; // Vòng lặp 1.5s
+    float tearY = eyeY + 25 + tearPhase * 20.0f; 
+    float tearW = 8.0f * (1.0f - tearPhase); // Nhỏ dần
+    float tearH = 12.0f * (1.0f - tearPhase);
+    
+    if (tearW > 2) {
+      uint32_t tearColor = 0x00FFFF; // Màu Cyan
+      drawGradientAsymmetricRect(&canvasSprite, eyeLx + 10, tearY, tearW, tearH, 2, tearColor, tearColor, false);
+      
+      // Mắt phải rơi lệch nhịp
+      float tearPhaseR = ((millis() + 500) % 1500) / 1500.0f;
+      float tearYR = eyeY + 25 + tearPhaseR * 20.0f;
+      float tearWR = 8.0f * (1.0f - tearPhaseR);
+      float tearHR = 12.0f * (1.0f - tearPhaseR);
+      if (tearWR > 2) {
+        drawGradientAsymmetricRect(&canvasSprite, eyeRx - 10, tearYR, tearWR, tearHR, 2, tearColor, tearColor, false);
+      }
+    }
+  }
 
   if (currentFace.mouthHeight > 0.5) {
     float mouthX = 120 + currentFace.offsetX;
@@ -516,6 +557,9 @@ void loop() {
     case 5: targetFace = stateSurprised; break;
     case 6: targetFace = stateDoubt; break;
     case 7: targetFace = stateIdle; break;
+    case 8: targetFace = stateCry; break;
+    case 9: targetFace = stateDizzy; break;
+    case 10: targetFace = stateWink; break;
     default: targetFace = stateNormal; break;
   }
 
