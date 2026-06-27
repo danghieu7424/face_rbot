@@ -68,6 +68,9 @@ const FaceState stateLookLeft  = {0, 35, 50, 20,  5, 4, 14,  5, 25, 2, 4, -30,  
 const FaceState stateLookRight = {0, 35, 50, 20,  5, 4, 14,  5, 25, 2, 4,  30,   0};
 const FaceState stateTalk      = {0, 38, 55, 18,  7, 4, 14, 35, 30, 2, 4,   0,  -2};
 const FaceState stateSleep     = {0, 40,  7,  3,  0, 4, 14,  0,  0, 0, 0,   0,  15}; // Mắt khép nhỏ, đầu cúi xuống (offsetY=15)
+const FaceState stateAngry     = {0, 40, 25, 10, 25, 4, 14,  5, 40, 2, 4,   0,   5}; // Mắt dẹt, góc nghiêng gắt, miệng rộng và bẹt
+const FaceState stateSurprised = {0, 50, 60, 25,  0, 4, 14, 40, 25, 2, 4,   0, -15}; // Mắt mở to tròn, miệng chữ O dài, đầu giật lên
+const FaceState stateDoubt     = {0, 35, 15,  5,  0, 4, 14,  4, 15, 2, 4,  25,   5}; // Mắt híp (squint), liếc sang một bên nghi ngờ
 
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle;
@@ -82,10 +85,20 @@ unsigned long nextBlinkDelay = 3000;
 int sleepBlinkCount = 0; // Đếm số lần chớp mắt lúc buồn ngủ
 
 void updateFaceLogic() {
-  // Điều chỉnh tốc độ chuyển trạng thái (Ngủ gật chậm lại)
-  float currentLerp = lerpSpeed;
+  // Điều chỉnh tốc độ chuyển trạng thái (Animation Timing Tùy chỉnh)
+  float currentLerp = lerpSpeed; // Mặc định 0.3
+  
   if (targetFace.eyeHeight == stateSleep.eyeHeight && currentFace.eyeHeight > 10) {
-    currentLerp = 0.03; // Sụp mí và gục đầu từ từ (khoảng 2 giây)
+    currentLerp = 0.03; // Ngủ: Sụp mí và gục đầu từ từ (khoảng 2 giây)
+  } 
+  else if (targetFace.eyeHeight == stateSurprised.eyeHeight) {
+    currentLerp = 0.6;  // Ngạc nhiên: Giật bắn mình mở to mắt (Cực nhanh)
+  }
+  else if (targetFace.eyeAngle == stateAngry.eyeAngle) {
+    currentLerp = 0.4;  // Giận dữ: Quắc mắt dứt khoát
+  }
+  else if (targetFace.eyeHeight == stateDoubt.eyeHeight) {
+    currentLerp = 0.08; // Nghi ngờ: Từ từ híp mắt và liếc nhìn (Chậm rãi, nguy hiểm)
   }
 
   currentFace.eyeShapeType = targetFace.eyeShapeType; 
@@ -355,12 +368,15 @@ void loop() {
       targetFace.offsetY = random(-15, 21); // Ngước lên / Cúi xuống
       nextStateDelay = random(1000, 3000);  // Thay đổi điểm nhìn nhanh
     } else {
-      // 40% thời gian: Thể hiện cảm xúc (Vui, Buồn, Nói chuyện, Nhàn rỗi, Ngủ)
-      int emotion = random(0, 5);
+      // 40% thời gian: Thể hiện cảm xúc đa dạng
+      int emotion = random(0, 8); // 8 Trạng thái (0->7)
       if (emotion == 0) targetFace = stateHappy;
       else if (emotion == 1) targetFace = stateSad;
       else if (emotion == 2) targetFace = stateTalk;
       else if (emotion == 3) targetFace = stateSleep;
+      else if (emotion == 4) targetFace = stateAngry;
+      else if (emotion == 5) targetFace = stateSurprised;
+      else if (emotion == 6) targetFace = stateDoubt;
       else targetFace = stateIdle;
       
       if (emotion == 3) {
