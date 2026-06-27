@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Robot Face Expression Builder</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* CSS mô phỏng chính xác màn hình ST7789 */
+        .st7789-display {
+            width: 240px;
+            height: 240px;
+            background-color: #000;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            border: 4px solid #333;
+            border-radius: 8px;
+        }
+
+        .face-part {
+            position: absolute;
+            background-color: #00FFFF;
+            /* TFT_CYAN */
+            transition: all 0.1s ease-out;
+            /* Mô phỏng Lerp mượt mà trên UI */
+        }
+    </style>
+</head>
+
+<body class="bg-gray-900 text-gray-100 min-h-screen p-8 font-sans">
+
+    <div class="max-w-5xl mx-auto">
+        <header class="mb-8 border-b border-gray-700 pb-4">
+            <h1 class="text-3xl font-bold text-cyan-400">ESP32-S3: Robot Expression Builder</h1>
+            <p class="text-gray-400 mt-2">Công cụ mô phỏng toán học và tự động tạo mã C++ (Struct FaceState) cho
+                LovyanGFX.</p>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+
+            <!-- Cột 1: Màn hình mô phỏng -->
+            <div class="flex flex-col items-center space-y-4">
+                <h2 class="text-xl font-semibold">Mô phỏng ST7789 (240x240)</h2>
+                <div class="st7789-display" id="display">
+                    <!-- Các bộ phận khuôn mặt sẽ được render bằng JS -->
+                    <div id="eye-left" class="face-part"></div>
+                    <div id="eye-right" class="face-part"></div>
+                    <div id="mouth" class="face-part"></div>
+                </div>
+                <div class="text-sm text-gray-400">Gốc tọa độ (0,0) ở góc trên bên trái</div>
+            </div>
+
+            <!-- Cột 2: Bảng điều khiển (Sliders) -->
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                <h2 class="text-xl font-semibold mb-6 border-b border-gray-600 pb-2">Thông số Toán học</h2>
+
+                <div class="space-y-5">
+                    <!-- Tên Trạng Thái -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-300 mb-1">Tên Trạng thái (Biến C++)</label>
+                        <input type="text" id="stateName" value="stateCustom"
+                            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
+                    </div>
+
+                    <!-- MỚI: Thêm dropdown chọn kiểu dáng mắt -->
+                    <div class="pt-4 border-t border-gray-700">
+                        <label class="block text-sm font-medium text-cyan-300 mb-1">Kiểu Dáng Mắt (eyeShapeType)</label>
+                        <select id="eyeShapeType"
+                            class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
+                            <option value="0">0: Oval / Chữ nhật bo góc</option>
+                            <option value="1">1: Bán nguyệt trên (Vui vẻ - ^_^)</option>
+                            <option value="2">2: Bán nguyệt dưới (Chán nản - -_-)</option>
+                            <option value="3">3: Oval đáy phẳng (Ngạc nhiên - O_O)</option>
+                        </select>
+                    </div>
+
+                    <!-- Mắt -->
+                    <div class="pt-4 border-t border-gray-700">
+                        <label class="flex justify-between text-sm text-cyan-300 mb-1">
+                            <span>Chiều rộng Mắt (eyeWidth)</span> <span id="val-eyeWidth">40</span>
+                        </label>
+                        <input type="range" id="eyeWidth" min="10" max="80" value="40" class="w-full cursor-pointer">
+                    </div>
+
+                    <!-- Đã thêm lại trường eyeHeight bị thiếu -->
+                    <div>
+                        <label class="flex justify-between text-sm text-cyan-300 mb-1">
+                            <span>Chiều cao Mắt (eyeHeight)</span> <span id="val-eyeHeight">60</span>
+                        </label>
+                        <input type="range" id="eyeHeight" min="10" max="120" value="60" class="w-full cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="flex justify-between text-sm text-cyan-300 mb-1">
+                            <span>Độ bo góc Mắt (eyeRadius)</span> <span id="val-eyeRadius">20</span>
+                        </label>
+                        <input type="range" id="eyeRadius" min="0" max="60" value="20" class="w-full cursor-pointer">
+                    </div>
+
+                    <!-- MỚI: Thêm các thanh trượt Nghiêng, Glow, Shadow -->
+                    <div>
+                        <label class="flex justify-between text-sm text-cyan-300 mb-1">
+                            <span>Góc nghiêng (eyeAngle)</span> <span id="val-eyeAngle">0</span>
+                        </label>
+                        <input type="range" id="eyeAngle" min="-45" max="45" value="0" class="w-full cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="flex justify-between text-sm text-yellow-300 mb-1">
+                            <span>Độ mờ đằng sau (glowSize)</span> <span id="val-glowSize">10</span>
+                        </label>
+                        <input type="range" id="glowSize" min="0" max="40" value="10" class="w-full cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="flex justify-between text-sm text-yellow-300 mb-1">
+                            <span>Bóng nhẹ dưới tròng (innerShadow)</span> <span id="val-innerShadow">4</span>
+                        </label>
+                        <input type="range" id="innerShadow" min="0" max="20" value="4" class="w-full cursor-pointer">
+                    </div>
+
+                    <!-- Miệng -->
+                    <div class="pt-4 border-t border-gray-700">
+                        <label class="flex justify-between text-sm text-pink-300 mb-1">
+                            <span>Chiều rộng Miệng (mouthWidth)</span> <span id="val-mouthWidth">40</span>
+                        </label>
+                        <input type="range" id="mouthWidth" min="0" max="120" value="40" class="w-full cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="flex justify-between text-sm text-pink-300 mb-1">
+                            <span>Chiều cao Miệng (mouthHeight)</span> <span id="val-mouthHeight">8</span>
+                        </label>
+                        <input type="range" id="mouthHeight" min="0" max="60" value="8" class="w-full cursor-pointer">
+                        <p class="text-xs text-gray-500 mt-1">Kéo về 0 để thiết lập trạng thái Idle (Ẩn miệng).</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cột 3: Xuất mã C++ -->
+            <div class="flex flex-col bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
+                <div class="flex justify-between items-center mb-4 border-b border-gray-600 pb-2">
+                    <h2 class="text-xl font-semibold">Mã C++ (Struct)</h2>
+                    <button id="copyBtn"
+                        class="bg-cyan-600 hover:bg-cyan-500 text-white text-sm px-3 py-1 rounded transition-colors">
+                        Copy Code
+                    </button>
+                </div>
+
+                <p class="text-sm text-gray-400 mb-2">Chép dòng này vào phần PHÂN ĐOẠN 2 trong Arduino IDE:</p>
+                <div class="bg-black p-4 rounded text-sm font-mono text-green-400 overflow-x-auto flex-grow relative">
+                    <pre id="codeOutput">const FaceState stateCustom = {40, 60, 15, 8, 40};</pre>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- Script quản lý trạng thái (State Management) -->
+    <script>
+        // Trạng thái tập trung (Single Source of Truth)
+        const state = {
+            name: 'stateCustom',
+            eyeShapeType: 0, // 0: Oval, 1: Top Half, 2: Bottom Half, 3: Flat Bottom
+            eyeWidth: 40,
+            eyeHeight: 50,
+            eyeRadius: 20,
+            eyeAngle: 7,
+            glowSize: 4,
+            innerShadow: 14,
+            mouthWidth: 45,
+            mouthHeight: 10
+        };
+
+        // DOM Elements
+        const DOM = {
+            eyeLeft: document.getElementById('eye-left'),
+            eyeRight: document.getElementById('eye-right'),
+            mouth: document.getElementById('mouth'),
+            codeOutput: document.getElementById('codeOutput'),
+            stateName: document.getElementById('stateName')
+        };
+
+        // Hàm Render: Chuyển đổi thông số toán học thành CSS để vẽ lên màn hình mô phỏng
+        // Logic TỌA ĐỘ này phải KHỚP 100% với hàm renderToScreen() trong ESP32 C++
+        function renderUI() {
+            // Xử lý hình dáng mắt qua CSS Border Radius nâng cao
+            let borderRadiusCSS = `${state.eyeRadius}px`;
+            if (state.eyeShapeType == 1) { // Bán nguyệt trên
+                borderRadiusCSS = `50% 50% 10% 10% / 100% 100% 10% 10%`;
+            } else if (state.eyeShapeType == 2) { // Bán nguyệt dưới
+                borderRadiusCSS = `10% 10% 50% 50% / 10% 10% 100% 100%`;
+            } else if (state.eyeShapeType == 3) { // Oval đáy phẳng
+                borderRadiusCSS = `50% 50% 10% 10% / 60% 60% 20% 20%`;
+            } else {
+                // Nếu mắt là oval hoàn toàn (chiều rộng bằng bo góc * 2)
+                if (state.eyeRadius >= state.eyeWidth / 2) {
+                    borderRadiusCSS = `50%`;
+                }
+            }
+
+            // Xử lý Glow và Inner Shadow
+            // Màu CYAN mặc định: rgb(0, 255, 255). Inner shadow dùng màu đen mờ.
+            const boxShadowCSS = `
+                0 0 ${state.glowSize}px ${state.glowSize / 2}px rgba(0, 255, 255, 0.4),
+                inset 0 -${state.innerShadow}px ${state.innerShadow}px rgba(0, 0, 0, 0.5)
+            `;
+
+            // Style chung cho cả 2 mắt
+            const applyEyeStyles = (el, isRightEye = false) => {
+                el.style.width = `${state.eyeWidth}px`;
+                el.style.height = `${state.eyeHeight}px`;
+                el.style.top = `${90 - (state.eyeHeight / 2)}px`;
+                el.style.borderRadius = borderRadiusCSS;
+                el.style.boxShadow = boxShadowCSS;
+
+                // Góc nghiêng: Mắt phải nghiêng ngược lại mắt trái để tạo sự đối xứng biểu cảm
+                let angle = isRightEye ? -state.eyeAngle : state.eyeAngle;
+                el.style.transform = `rotate(${angle}deg)`;
+            };
+
+            // Mắt trái
+            DOM.eyeLeft.style.left = `40px`;
+            applyEyeStyles(DOM.eyeLeft, false);
+
+            // Mắt phải
+            DOM.eyeRight.style.left = `${200 - state.eyeWidth}px`;
+            applyEyeStyles(DOM.eyeRight, true);
+
+            // Miệng
+            if (state.mouthHeight > 0) {
+                DOM.mouth.style.opacity = '1';
+                DOM.mouth.style.width = `${state.mouthWidth}px`;
+                DOM.mouth.style.height = `${state.mouthHeight}px`;
+                DOM.mouth.style.left = `${120 - (state.mouthWidth / 2)}px`;
+                DOM.mouth.style.top = `${170 - (state.mouthHeight / 2)}px`;
+                DOM.mouth.style.borderRadius = `6px`;
+            } else {
+                DOM.mouth.style.opacity = '0'; // Ẩn hoàn toàn nếu chiều cao = 0
+            }
+
+            // Render mã C++ mới (Cập nhật Struct cho khớp với thuộc tính mới)
+            DOM.codeOutput.innerText = `const FaceState ${state.name} = {\n  ${state.eyeShapeType}, // eyeShapeType\n  ${state.eyeWidth}, // eyeWidth\n  ${state.eyeHeight}, // eyeHeight\n  ${state.eyeRadius}, // eyeRadius\n  ${state.eyeAngle}, // eyeAngle\n  ${state.glowSize}, // glowSize\n  ${state.innerShadow}, // innerShadow\n  ${state.mouthHeight}, // mouthHeight\n  ${state.mouthWidth} // mouthWidth\n};`;
+        }
+
+        // Đăng ký sự kiện (Event Listeners) cho các Sliders
+        const keys = ['eyeShapeType', 'eyeWidth', 'eyeHeight', 'eyeRadius', 'eyeAngle', 'glowSize', 'innerShadow', 'mouthWidth', 'mouthHeight'];
+        keys.forEach(key => {
+            const input = document.getElementById(key);
+            const valDisplay = document.getElementById(`val-${key}`); // Có thể null với thẻ select
+
+            // Thêm kiểm tra null để tránh lỗi nếu thiếu phần tử HTML
+            if (input) {
+                input.addEventListener('input', (e) => {
+                    // Xử lý riêng cho Dropdown Shape
+                    if (key === 'eyeShapeType') {
+                        state[key] = parseInt(e.target.value);
+                    } else {
+                        const val = parseInt(e.target.value);
+                        state[key] = val; // Cập nhật state
+                        if (valDisplay) valDisplay.innerText = val; // Cập nhật Label
+                    }
+                    renderUI(); // Vẽ lại
+                });
+            } else {
+                console.warn(`Phần tử nhập liệu bị thiếu: ${key}`);
+            }
+        });
+
+        // Sự kiện đổi tên biến
+        DOM.stateName.addEventListener('input', (e) => {
+            state.name = e.target.value.replace(/[^a-zA-Z0-9_]/g, ''); // Lọc ký tự đặc biệt, chuẩn C++
+            renderUI();
+        });
+
+        // Nút Copy Code
+        document.getElementById('copyBtn').addEventListener('click', () => {
+            const code = DOM.codeOutput.innerText;
+            // Fallback khi không hỗ trợ clipboard API trong iframe
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(code).then(showSuccess);
+            } else {
+                const textArea = document.createElement("textarea");
+                textArea.value = code;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showSuccess();
+                } catch (err) {
+                    console.error('Không thể copy', err);
+                }
+                document.body.removeChild(textArea);
+            }
+
+            function showSuccess() {
+                const btn = document.getElementById('copyBtn');
+                btn.innerText = "Đã Copy!";
+                btn.classList.replace('bg-cyan-600', 'bg-green-600');
+                setTimeout(() => {
+                    btn.innerText = "Copy Code";
+                    btn.classList.replace('bg-green-600', 'bg-cyan-600');
+                }, 2000);
+            }
+        });
+
+        // Khởi chạy lần đầu
+        renderUI();
+    </script>
+</body>
+
+</html>
