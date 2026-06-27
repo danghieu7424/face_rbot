@@ -92,11 +92,7 @@ cargo espflash monitor
 ```
 ## flash:
 ```Bash
-espflash flash --monitor --chip esp32s3 web_folder.ino.elf
-```
-## monitor:
-```Bash
-cargo espflash monitor
+espflash flash --monitor --chip esp32s3 "build/esp32.esp32.XIAO_ESP32S3/face_rbot.ino.elf"
 ```
 
 

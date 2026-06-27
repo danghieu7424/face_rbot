@@ -70,7 +70,7 @@ const FaceState stateTalkClose= {38, 62, 10, 4,  35};
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle; // Bắt đầu khởi động ở trạng thái Idle
 
-float lerpSpeed = 0.2; // Tốc độ nội suy (Tăng lên 0.2 để bù lại framerate thấp hơn do SPI 20MHz)
+float lerpSpeed = 0.1; // Tốc độ nội suy (Tăng lên 0.1 để bù lại framerate thấp hơn do SPI 20MHz)
 
 // ==============================================================
 // PHÂN ĐOẠN 3: LOGIC VẼ VÀ RENDER VÀO BỘ ĐỆM
@@ -117,7 +117,7 @@ void setup() {
   
   // 1. Khởi tạo màn hình
   tft.init();
-  tft.setRotation(1); // Xoay màn hình theo đúng file test của bạn
+  tft.setRotation(0); // Xoay màn hình theo đúng file test của bạn
   tft.fillScreen(tft.color565(0, 0, 0)); // Xóa đen màn vật lý lần đầu
 
   // 2. CẤU HÌNH BỘ ĐỆM OPI PSRAM CHO ESP32-S3 N16R8
