@@ -70,7 +70,7 @@ const FaceState stateTalkClose= {38, 62, 10, 4,  35};
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle; // Bắt đầu khởi động ở trạng thái Idle
 
-float lerpSpeed = 0.1; // Tốc độ nội suy (Tăng lên 0.1 để bù lại framerate thấp hơn do SPI 20MHz)
+float lerpSpeed = 0.3; // Tốc độ nội suy (Tăng lên 0.3 để bù lại framerate thấp hơn do SPI 20MHz)
 
 // ==============================================================
 // PHÂN ĐOẠN 3: LOGIC VẼ VÀ RENDER VÀO BỘ ĐỆM
