@@ -179,9 +179,11 @@ void drawEye(float centerX, float centerY, bool isRightEye) {
   float pivotX = 60, pivotY = 60;
   eyeSprite.setPivot(pivotX, pivotY);
 
-  uint32_t colorTop = tft.color565(0, 255, 255); // Cyan (Màu lõi sáng)
-  // ĐÃ LOẠI BỎ colorBot ĐỂ TRÁNH LỖI MOIRÉ KHI XOAY
-  uint32_t shadowColor = tft.color565(0, 20, 50); // Dark Blue (Màu nền bóng)
+  // ĐỊNH NGHĨA DẢI MÀU (Bảng màu tĩnh theo Hybrid FSD / Token Design)
+  uint32_t colorTop = tft.color565(0, 255, 255);  // Lớp Tâm: Cyan (Sáng nhất)
+  uint32_t colorMid = tft.color565(0, 180, 255);  // Lớp Giữa: Xanh nhạt
+  uint32_t colorBot = tft.color565(0, 100, 255);  // Lớp Đáy: Xanh dương đậm
+  uint32_t shadowColor = tft.color565(0, 20, 50); // Lớp Bóng giả
 
   float w = currentFace.eyeWidth;
   float h = currentFace.eyeHeight;
@@ -190,9 +192,12 @@ void drawEye(float centerX, float centerY, bool isRightEye) {
   // 1. Vẽ Bóng Giả (Dark Blue) làm nền nguyên khối
   drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY, w, h, shape, shadowColor, shadowColor, false);
 
-  // 2. Vẽ Lõi Sáng (ÉP CHẠY MÀU SOLID BẰNG CÁCH TRUYỀN colorTop CHO CẢ 2 THAM SỐ)
-  // Sự đồng nhất màu sẽ khiến hiện tượng xé dòng (banding) khi xoay biến mất hoàn toàn
-  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 2, w - 2, h - 2, shape, colorTop, colorTop, false);
+  // 2. GIẢI PHÁP CHUYỂN MÀU PHÂN LỚP (CONCENTRIC LAYERS)
+  // Đổ màu theo 3 lớp khối đặc chồng lên nhau để mô phỏng Gradient + Glow
+  // Tuyệt đối không xé sọc khi xoay (Anti-Moiré technique)
+  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 1, w,     h,     shape, colorBot, colorBot, false);
+  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 2, w - 4, h - 4, shape, colorMid, colorMid, false);
+  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 3, w - 8, h - 8, shape, colorTop, colorTop, false);
 
   // Xoay và in ra màn hình
   canvasSprite.setPivot(centerX, centerY);
@@ -212,15 +217,19 @@ void renderToScreen() {
     float w = currentFace.mouthWidth;
     float h = currentFace.mouthHeight;
     
+    // Đồng bộ bảng màu với Mắt
     uint32_t colorTop = tft.color565(0, 255, 255);
-    // ĐÃ LOẠI BỎ colorBot CỦA MIỆNG
+    uint32_t colorMid = tft.color565(0, 180, 255);
+    uint32_t colorBot = tft.color565(0, 100, 255);
     uint32_t shadowColor = tft.color565(0, 20, 50);
 
     // Bóng giả cho Miệng
     drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, w, h, 0, shadowColor, shadowColor, true);
     
-    // Lõi sáng dịch lên (ÉP CHẠY MÀU SOLID TƯƠNG TỰ MẮT ĐỂ ĐỒNG BỘ)
-    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 2, w - 2, h - 2, 0, colorTop, colorTop, true);
+    // Chuyển màu phân lớp cho Miệng (Kiểm tra an toàn: chỉ vẽ lớp trong khi đủ độ cao)
+    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 1, w,     h,     0, colorBot, colorBot, true);
+    if (h > 4) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 2, w - 4, h - 4, 0, colorMid, colorMid, true);
+    if (h > 8) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 3, w - 8, h - 8, 0, colorTop, colorTop, true);
   }
 
   canvasSprite.pushSprite(0, 0);
