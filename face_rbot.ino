@@ -145,14 +145,20 @@ void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, f
   } else {
     // Miệng: Hiệu ứng mở tròn chữ O/A
     float topRadiusFactor = 0.15f; // Mặc định: bo nhẹ 15%
-    if (h > 20.0f) {
-      // Khi chiều cao > 20, tăng dần độ bo tròn góc trên
-      topRadiusFactor = 0.15f + (h - 20.0f) * 0.02f; 
-      if (topRadiusFactor > 0.5f) topRadiusFactor = 0.5f; // Tối đa 50% (nửa hình tròn)
+    float bottomRadiusFactor = 1.0f; // Mặc định: đáy chữ U sâu 100%
+
+    // SỬ DỤNG CHIỀU CAO GỐC (currentFace.mouthHeight) thay vì h của từng layer
+    // Việc này đảm bảo TẤT CẢ 4 lớp màu (Shadow, Bot, Mid, Top) đều có chung 1 tỷ lệ bo tròn
+    if (currentFace.mouthHeight > 20.0f) {
+      topRadiusFactor = 0.15f + (currentFace.mouthHeight - 20.0f) * 0.03f; 
+      if (topRadiusFactor > 0.5f) topRadiusFactor = 0.5f; // Tối đa 50% (nửa đường tròn trên)
+      
+      // Nội suy đáy: Khi góc trên tròn ra (0.5), góc dưới phải thu lại (0.5) để tạo hình chữ O hoàn hảo
+      bottomRadiusFactor = 1.0f - (topRadiusFactor - 0.15f) * 1.428f; 
     }
 
     rTL_x = rTR_x = w * topRadiusFactor; rTL_y = rTR_y = h * topRadiusFactor;
-    rBL_x = rBR_x = w * 0.5f;  rBL_y = rBR_y = h * 1.0f;
+    rBL_x = rBR_x = w * 0.5f;  rBL_y = rBR_y = h * bottomRadiusFactor;
   }
 
   // Chống tràn bán kính
