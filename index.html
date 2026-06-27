@@ -53,8 +53,9 @@
             </div>
 
             <!-- Cột 2: Bảng điều khiển (Sliders) -->
-            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg">
-                <h2 class="text-xl font-semibold mb-6 border-b border-gray-600 pb-2">Thông số Toán học</h2>
+            <div class="bg-gray-800 p-6 rounded-xl border border-gray-700 shadow-lg h-[650px] overflow-y-auto">
+                <h2 class="text-xl font-semibold mb-6 border-b border-gray-600 pb-2 sticky top-0 bg-gray-800 z-10">Thông
+                    số Toán học</h2>
 
                 <div class="space-y-5">
                     <!-- Tên Trạng Thái -->
@@ -64,32 +65,30 @@
                             class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
                     </div>
 
-                    <!-- MỚI: Thêm dropdown chọn kiểu dáng mắt -->
+                    <!-- Mắt -->
                     <div class="pt-4 border-t border-gray-700">
                         <label class="block text-sm font-medium text-cyan-300 mb-1">Kiểu Dáng Mắt (eyeShapeType)</label>
                         <select id="eyeShapeType"
                             class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white focus:outline-none focus:border-cyan-400">
-                            <option value="0">0: Oval / Chữ nhật bo góc</option>
+                            <option value="0" selected>0: Oval / Chữ nhật bo góc</option>
                             <option value="1">1: Bán nguyệt trên (Vui vẻ - ^_^)</option>
                             <option value="2">2: Bán nguyệt dưới (Chán nản - -_-)</option>
                             <option value="3">3: Oval đáy phẳng (Ngạc nhiên - O_O)</option>
                         </select>
                     </div>
 
-                    <!-- Mắt -->
-                    <div class="pt-4 border-t border-gray-700">
+                    <div>
                         <label class="flex justify-between text-sm text-cyan-300 mb-1">
                             <span>Chiều rộng Mắt (eyeWidth)</span> <span id="val-eyeWidth">40</span>
                         </label>
                         <input type="range" id="eyeWidth" min="10" max="80" value="40" class="w-full cursor-pointer">
                     </div>
 
-                    <!-- Đã thêm lại trường eyeHeight bị thiếu -->
                     <div>
                         <label class="flex justify-between text-sm text-cyan-300 mb-1">
-                            <span>Chiều cao Mắt (eyeHeight)</span> <span id="val-eyeHeight">60</span>
+                            <span>Chiều cao Mắt (eyeHeight)</span> <span id="val-eyeHeight">50</span>
                         </label>
-                        <input type="range" id="eyeHeight" min="10" max="120" value="60" class="w-full cursor-pointer">
+                        <input type="range" id="eyeHeight" min="10" max="120" value="50" class="w-full cursor-pointer">
                     </div>
 
                     <div>
@@ -99,26 +98,25 @@
                         <input type="range" id="eyeRadius" min="0" max="60" value="20" class="w-full cursor-pointer">
                     </div>
 
-                    <!-- MỚI: Thêm các thanh trượt Nghiêng, Glow, Shadow -->
                     <div>
                         <label class="flex justify-between text-sm text-cyan-300 mb-1">
-                            <span>Góc nghiêng (eyeAngle)</span> <span id="val-eyeAngle">0</span>
+                            <span>Góc nghiêng (eyeAngle)</span> <span id="val-eyeAngle">7</span>
                         </label>
-                        <input type="range" id="eyeAngle" min="-45" max="45" value="0" class="w-full cursor-pointer">
+                        <input type="range" id="eyeAngle" min="-45" max="45" value="7" class="w-full cursor-pointer">
                     </div>
 
                     <div>
                         <label class="flex justify-between text-sm text-yellow-300 mb-1">
-                            <span>Độ mờ đằng sau (glowSize)</span> <span id="val-glowSize">10</span>
+                            <span>Độ mờ đằng sau (glowSize)</span> <span id="val-glowSize">4</span>
                         </label>
-                        <input type="range" id="glowSize" min="0" max="40" value="10" class="w-full cursor-pointer">
+                        <input type="range" id="glowSize" min="0" max="40" value="4" class="w-full cursor-pointer">
                     </div>
 
                     <div>
                         <label class="flex justify-between text-sm text-yellow-300 mb-1">
-                            <span>Bóng nhẹ dưới tròng (innerShadow)</span> <span id="val-innerShadow">4</span>
+                            <span>Bóng nhẹ dưới tròng (innerShadow)</span> <span id="val-innerShadow">14</span>
                         </label>
-                        <input type="range" id="innerShadow" min="0" max="20" value="4" class="w-full cursor-pointer">
+                        <input type="range" id="innerShadow" min="0" max="20" value="14" class="w-full cursor-pointer">
                     </div>
 
                     <!-- Miệng -->
@@ -131,10 +129,25 @@
 
                     <div>
                         <label class="flex justify-between text-sm text-pink-300 mb-1">
-                            <span>Chiều cao Miệng (mouthHeight)</span> <span id="val-mouthHeight">8</span>
+                            <span>Chiều cao Miệng (mouthHeight)</span> <span id="val-mouthHeight">10</span>
                         </label>
-                        <input type="range" id="mouthHeight" min="0" max="60" value="8" class="w-full cursor-pointer">
-                        <p class="text-xs text-gray-500 mt-1">Kéo về 0 để thiết lập trạng thái Idle (Ẩn miệng).</p>
+                        <input type="range" id="mouthHeight" min="0" max="40" value="10" class="w-full cursor-pointer">
+                        <p class="text-xs text-gray-500 mt-1">Kéo về 0 để thiết lập trạng thái Idle.</p>
+                    </div>
+
+                    <div>
+                        <label class="flex justify-between text-sm text-pink-300 mb-1">
+                            <span>Độ mờ đằng sau Miệng (mouthGlowSize)</span> <span id="val-mouthGlowSize">2</span>
+                        </label>
+                        <input type="range" id="mouthGlowSize" min="0" max="40" value="2" class="w-full cursor-pointer">
+                    </div>
+
+                    <div>
+                        <label class="flex justify-between text-sm text-pink-300 mb-1">
+                            <span>Bóng nhẹ dưới Miệng (mouthInnerShadow)</span> <span id="val-mouthInnerShadow">4</span>
+                        </label>
+                        <input type="range" id="mouthInnerShadow" min="0" max="20" value="4"
+                            class="w-full cursor-pointer">
                     </div>
                 </div>
             </div>
@@ -151,7 +164,7 @@
 
                 <p class="text-sm text-gray-400 mb-2">Chép dòng này vào phần PHÂN ĐOẠN 2 trong Arduino IDE:</p>
                 <div class="bg-black p-4 rounded text-sm font-mono text-green-400 overflow-x-auto flex-grow relative">
-                    <pre id="codeOutput">const FaceState stateCustom = {40, 60, 15, 8, 40};</pre>
+                    <pre id="codeOutput"></pre>
                 </div>
             </div>
 
@@ -160,7 +173,7 @@
 
     <!-- Script quản lý trạng thái (State Management) -->
     <script>
-        // Trạng thái tập trung (Single Source of Truth)
+        // Trạng thái tập trung (Single Source of Truth) - Đã đồng bộ khớp với yêu cầu
         const state = {
             name: 'stateCustom',
             eyeShapeType: 0, // 0: Oval, 1: Top Half, 2: Bottom Half, 3: Flat Bottom
@@ -170,8 +183,10 @@
             eyeAngle: 7,
             glowSize: 4,
             innerShadow: 14,
-            mouthWidth: 45,
-            mouthHeight: 10
+            mouthHeight: 10,
+            mouthWidth: 40, // Điều chỉnh về 40 theo yêu cầu mới
+            mouthGlowSize: 2,
+            mouthInnerShadow: 4
         };
 
         // DOM Elements
@@ -184,7 +199,6 @@
         };
 
         // Hàm Render: Chuyển đổi thông số toán học thành CSS để vẽ lên màn hình mô phỏng
-        // Logic TỌA ĐỘ này phải KHỚP 100% với hàm renderToScreen() trong ESP32 C++
         function renderUI() {
             // Xử lý hình dáng mắt qua CSS Border Radius nâng cao
             let borderRadiusCSS = `${state.eyeRadius}px`;
@@ -195,17 +209,21 @@
             } else if (state.eyeShapeType == 3) { // Oval đáy phẳng
                 borderRadiusCSS = `50% 50% 10% 10% / 60% 60% 20% 20%`;
             } else {
-                // Nếu mắt là oval hoàn toàn (chiều rộng bằng bo góc * 2)
                 if (state.eyeRadius >= state.eyeWidth / 2) {
                     borderRadiusCSS = `50%`;
                 }
             }
 
-            // Xử lý Glow và Inner Shadow
-            // Màu CYAN mặc định: rgb(0, 255, 255). Inner shadow dùng màu đen mờ.
-            const boxShadowCSS = `
+            // Xử lý Glow và Inner Shadow cho MẮT
+            const eyeBoxShadowCSS = `
                 0 0 ${state.glowSize}px ${state.glowSize / 2}px rgba(0, 255, 255, 0.4),
                 inset 0 -${state.innerShadow}px ${state.innerShadow}px rgba(0, 0, 0, 0.5)
+            `;
+
+            // Xử lý Glow và Inner Shadow cho MIỆNG
+            const mouthBoxShadowCSS = `
+                0 0 ${state.mouthGlowSize}px ${state.mouthGlowSize / 2}px rgba(0, 255, 255, 0.4),
+                inset 0 -${state.mouthInnerShadow}px ${state.mouthInnerShadow}px rgba(0, 0, 0, 0.5)
             `;
 
             // Style chung cho cả 2 mắt
@@ -214,9 +232,9 @@
                 el.style.height = `${state.eyeHeight}px`;
                 el.style.top = `${90 - (state.eyeHeight / 2)}px`;
                 el.style.borderRadius = borderRadiusCSS;
-                el.style.boxShadow = boxShadowCSS;
+                el.style.boxShadow = eyeBoxShadowCSS;
 
-                // Góc nghiêng: Mắt phải nghiêng ngược lại mắt trái để tạo sự đối xứng biểu cảm
+                // Góc nghiêng đối xứng
                 let angle = isRightEye ? -state.eyeAngle : state.eyeAngle;
                 el.style.transform = `rotate(${angle}deg)`;
             };
@@ -229,56 +247,58 @@
             DOM.eyeRight.style.left = `${200 - state.eyeWidth}px`;
             applyEyeStyles(DOM.eyeRight, true);
 
-            // Miệng
+            // Miệng (Được đẩy lên cao sát mắt)
             if (state.mouthHeight > 0) {
                 DOM.mouth.style.opacity = '1';
                 DOM.mouth.style.width = `${state.mouthWidth}px`;
                 DOM.mouth.style.height = `${state.mouthHeight}px`;
                 DOM.mouth.style.left = `${120 - (state.mouthWidth / 2)}px`;
-                DOM.mouth.style.top = `${170 - (state.mouthHeight / 2)}px`;
-                DOM.mouth.style.borderRadius = `6px`;
+                // Đưa Y lên 125 thay vì 170 để sát mắt
+                DOM.mouth.style.top = `${125 - (state.mouthHeight / 2)}px`;
+
+                // PHẢN HỒI Ý KIẾN CỦA BẠN: Thay vì dùng hình chữ nhật bo góc (ví dụ: borderRadius = '10px'), 
+                // chúng ta dùng border-radius bất đối xứng để tạo hình "tam giác ngược": 
+                // Bo rất nhẹ ở 2 góc trên (15%) và bo cực mạnh ở 2 góc dưới (50% theo trục X, 80%-100% theo trục Y).
+                DOM.mouth.style.borderRadius = `15% 15% 50% 50% / 15% 15% 100% 100%`;
+
+                DOM.mouth.style.boxShadow = mouthBoxShadowCSS;
             } else {
-                DOM.mouth.style.opacity = '0'; // Ẩn hoàn toàn nếu chiều cao = 0
+                DOM.mouth.style.opacity = '0'; // Ẩn hoàn toàn
             }
 
-            // Render mã C++ mới (Cập nhật Struct cho khớp với thuộc tính mới)
-            DOM.codeOutput.innerText = `const FaceState ${state.name} = {\n  ${state.eyeShapeType}, // eyeShapeType\n  ${state.eyeWidth}, // eyeWidth\n  ${state.eyeHeight}, // eyeHeight\n  ${state.eyeRadius}, // eyeRadius\n  ${state.eyeAngle}, // eyeAngle\n  ${state.glowSize}, // glowSize\n  ${state.innerShadow}, // innerShadow\n  ${state.mouthHeight}, // mouthHeight\n  ${state.mouthWidth} // mouthWidth\n};`;
+            // Render mã C++ mới (Đúng chuẩn Format bạn yêu cầu)
+            DOM.codeOutput.innerText = `const FaceState ${state.name} = {\n  ${state.eyeShapeType}, // eyeShapeType\n  ${state.eyeWidth}, // eyeWidth\n  ${state.eyeHeight}, // eyeHeight\n  ${state.eyeRadius}, // eyeRadius\n  ${state.eyeAngle}, // eyeAngle\n  ${state.glowSize}, // glowSize\n  ${state.innerShadow}, // innerShadow\n  ${state.mouthHeight}, // mouthHeight\n  ${state.mouthWidth}, // mouthWidth\n  ${state.mouthGlowSize}, // mouthGlowSize\n  ${state.mouthInnerShadow} // mouthInnerShadow\n};`;
         }
 
         // Đăng ký sự kiện (Event Listeners) cho các Sliders
-        const keys = ['eyeShapeType', 'eyeWidth', 'eyeHeight', 'eyeRadius', 'eyeAngle', 'glowSize', 'innerShadow', 'mouthWidth', 'mouthHeight'];
+        const keys = ['eyeShapeType', 'eyeWidth', 'eyeHeight', 'eyeRadius', 'eyeAngle', 'glowSize', 'innerShadow', 'mouthWidth', 'mouthHeight', 'mouthGlowSize', 'mouthInnerShadow'];
         keys.forEach(key => {
             const input = document.getElementById(key);
-            const valDisplay = document.getElementById(`val-${key}`); // Có thể null với thẻ select
+            const valDisplay = document.getElementById(`val-${key}`);
 
-            // Thêm kiểm tra null để tránh lỗi nếu thiếu phần tử HTML
             if (input) {
                 input.addEventListener('input', (e) => {
-                    // Xử lý riêng cho Dropdown Shape
                     if (key === 'eyeShapeType') {
                         state[key] = parseInt(e.target.value);
                     } else {
                         const val = parseInt(e.target.value);
-                        state[key] = val; // Cập nhật state
-                        if (valDisplay) valDisplay.innerText = val; // Cập nhật Label
+                        state[key] = val;
+                        if (valDisplay) valDisplay.innerText = val;
                     }
-                    renderUI(); // Vẽ lại
+                    renderUI();
                 });
-            } else {
-                console.warn(`Phần tử nhập liệu bị thiếu: ${key}`);
             }
         });
 
         // Sự kiện đổi tên biến
         DOM.stateName.addEventListener('input', (e) => {
-            state.name = e.target.value.replace(/[^a-zA-Z0-9_]/g, ''); // Lọc ký tự đặc biệt, chuẩn C++
+            state.name = e.target.value.replace(/[^a-zA-Z0-9_]/g, '');
             renderUI();
         });
 
         // Nút Copy Code
         document.getElementById('copyBtn').addEventListener('click', () => {
             const code = DOM.codeOutput.innerText;
-            // Fallback khi không hỗ trợ clipboard API trong iframe
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(code).then(showSuccess);
             } else {
