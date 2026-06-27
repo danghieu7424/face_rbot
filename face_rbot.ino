@@ -79,21 +79,28 @@ float blinkFactor = 1.0;
 float targetBlinkFactor = 1.0;
 unsigned long lastBlinkTime = 0;
 unsigned long nextBlinkDelay = 3000;
+int sleepBlinkCount = 0; // Đếm số lần chớp mắt lúc buồn ngủ
 
 void updateFaceLogic() {
+  // Điều chỉnh tốc độ chuyển trạng thái (Ngủ gật chậm lại)
+  float currentLerp = lerpSpeed;
+  if (targetFace.eyeHeight == stateSleep.eyeHeight && currentFace.eyeHeight > 10) {
+    currentLerp = 0.03; // Sụp mí và gục đầu từ từ (khoảng 2 giây)
+  }
+
   currentFace.eyeShapeType = targetFace.eyeShapeType; 
-  currentFace.eyeWidth    += (targetFace.eyeWidth    - currentFace.eyeWidth)    * lerpSpeed;
-  currentFace.eyeHeight   += (targetFace.eyeHeight   - currentFace.eyeHeight)   * lerpSpeed;
-  currentFace.eyeRadius   += (targetFace.eyeRadius   - currentFace.eyeRadius)   * lerpSpeed;
-  currentFace.eyeAngle    += (targetFace.eyeAngle    - currentFace.eyeAngle)    * lerpSpeed;
-  currentFace.glowSize    += (targetFace.glowSize    - currentFace.glowSize)    * lerpSpeed;
-  currentFace.innerShadow += (targetFace.innerShadow - currentFace.innerShadow) * lerpSpeed;
-  currentFace.mouthHeight += (targetFace.mouthHeight - currentFace.mouthHeight) * lerpSpeed;
-  currentFace.mouthWidth  += (targetFace.mouthWidth  - currentFace.mouthWidth)  * lerpSpeed;
-  currentFace.mouthGlowSize += (targetFace.mouthGlowSize - currentFace.mouthGlowSize) * lerpSpeed;
-  currentFace.mouthInnerShadow += (targetFace.mouthInnerShadow - currentFace.mouthInnerShadow) * lerpSpeed;
-  currentFace.offsetX     += (targetFace.offsetX     - currentFace.offsetX)     * lerpSpeed;
-  currentFace.offsetY     += (targetFace.offsetY     - currentFace.offsetY)     * lerpSpeed;
+  currentFace.eyeWidth    += (targetFace.eyeWidth    - currentFace.eyeWidth)    * currentLerp;
+  currentFace.eyeHeight   += (targetFace.eyeHeight   - currentFace.eyeHeight)   * currentLerp;
+  currentFace.eyeRadius   += (targetFace.eyeRadius   - currentFace.eyeRadius)   * currentLerp;
+  currentFace.eyeAngle    += (targetFace.eyeAngle    - currentFace.eyeAngle)    * currentLerp;
+  currentFace.glowSize    += (targetFace.glowSize    - currentFace.glowSize)    * currentLerp;
+  currentFace.innerShadow += (targetFace.innerShadow - currentFace.innerShadow) * currentLerp;
+  currentFace.mouthHeight += (targetFace.mouthHeight - currentFace.mouthHeight) * currentLerp;
+  currentFace.mouthWidth  += (targetFace.mouthWidth  - currentFace.mouthWidth)  * currentLerp;
+  currentFace.mouthGlowSize += (targetFace.mouthGlowSize - currentFace.mouthGlowSize) * currentLerp;
+  currentFace.mouthInnerShadow += (targetFace.mouthInnerShadow - currentFace.mouthInnerShadow) * currentLerp;
+  currentFace.offsetX     += (targetFace.offsetX     - currentFace.offsetX)     * currentLerp;
+  currentFace.offsetY     += (targetFace.offsetY     - currentFace.offsetY)     * currentLerp;
 
   // Xử lý Blink Override độc lập (Không làm hỏng State gốc)
   unsigned long now = millis();
@@ -102,7 +109,14 @@ void updateFaceLogic() {
     if (now - lastBlinkTime > nextBlinkDelay + 150) { // Giữ mắt nhắm trong 150ms
       targetBlinkFactor = 1.0; // Mở mắt
       lastBlinkTime = now;
-      nextBlinkDelay = random(2000, 6000); // Ngẫu nhiên 2s đến 6s
+      
+      // Xử lý chớp mắt liên tục khi buồn ngủ
+      if (sleepBlinkCount > 0) {
+        sleepBlinkCount--;
+        nextBlinkDelay = 300; // Nháy lại ngay lập tức sau 300ms
+      } else {
+        nextBlinkDelay = random(2000, 6000); // Ngẫu nhiên 2s đến 6s
+      }
     }
   }
   blinkFactor += (targetBlinkFactor - blinkFactor) * 0.5; // Tốc độ chớp cực nhanh (0.5 > 0.3)
@@ -351,6 +365,11 @@ void loop() {
       
       if (emotion == 3) {
         nextStateDelay = random(5000, 10000); // Khi ngủ thì ngủ lâu hơn (5s - 10s)
+        
+        // Kích hoạt chuỗi hành động ngái ngủ (Drowsy Sequence)
+        sleepBlinkCount = 2; // Ép chớp mắt 2 lần liên tiếp
+        nextBlinkDelay = 200; // Bắt đầu chớp cái đầu tiên ngay lập tức
+        lastBlinkTime = millis();
       } else {
         nextStateDelay = random(3000, 6000); // Các cảm xúc khác giữ ngắn hơn
       }
