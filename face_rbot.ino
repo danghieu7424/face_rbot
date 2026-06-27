@@ -55,12 +55,18 @@ struct FaceState {
   float mouthWidth;
   float mouthGlowSize;
   float mouthInnerShadow;
+  float offsetX; // Tọa độ X giả lập chuyển động cổ/mắt
+  float offsetY; // Tọa độ Y giả lập chuyển động cổ/mắt
 };
 
-// Khớp 100% với file HTML của user
-const FaceState stateNormal   = {0, 40, 50, 20, 7,  4, 14, 8,  40, 2, 4};
-const FaceState stateIdle     = {0, 40, 50, 20, 7,  4, 14, 0,  0,  0, 0};  
-
+// Khớp 100% với file HTML của user, bổ sung offsetX, offsetY
+const FaceState stateNormal    = {0, 40, 50, 20,  7, 4, 14,  8, 40, 2, 4,   0,   0};
+const FaceState stateIdle      = {0, 40, 50, 20,  7, 4, 14,  0,  0, 0, 0,   0,   0};  
+const FaceState stateHappy     = {1, 45, 25, 20, 12, 4, 14, 25, 55, 2, 4,   0,  -5}; 
+const FaceState stateSad       = {0, 35, 40, 15,-10, 4, 14,  4, 20, 2, 4,   0,  15}; 
+const FaceState stateLookLeft  = {0, 35, 50, 20,  5, 4, 14,  5, 25, 2, 4, -30,   0};
+const FaceState stateLookRight = {0, 35, 50, 20,  5, 4, 14,  5, 25, 2, 4,  30,   0};
+const FaceState stateTalk      = {0, 38, 55, 18,  7, 4, 14, 35, 30, 2, 4,   0,  -2};
 
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle;
@@ -79,6 +85,8 @@ void updateFaceLogic() {
   currentFace.mouthWidth  += (targetFace.mouthWidth  - currentFace.mouthWidth)  * lerpSpeed;
   currentFace.mouthGlowSize += (targetFace.mouthGlowSize - currentFace.mouthGlowSize) * lerpSpeed;
   currentFace.mouthInnerShadow += (targetFace.mouthInnerShadow - currentFace.mouthInnerShadow) * lerpSpeed;
+  currentFace.offsetX     += (targetFace.offsetX     - currentFace.offsetX)     * lerpSpeed;
+  currentFace.offsetY     += (targetFace.offsetY     - currentFace.offsetY)     * lerpSpeed;
 }
 
 uint32_t lerpColor(uint32_t from, uint32_t to, float t) {
@@ -206,12 +214,17 @@ void drawEye(float centerX, float centerY, bool isRightEye) {
 void renderToScreen() {
   canvasSprite.fillSprite(tft.color565(0, 0, 0));
 
-  drawEye(60, 90, false); 
-  drawEye(180, 90, true); 
+  // Áp dụng offsetX, offsetY để mô phỏng trục xoay cổ
+  float eyeLx = 60 + currentFace.offsetX;
+  float eyeRx = 180 + currentFace.offsetX;
+  float eyeY  = 90 + currentFace.offsetY;
+
+  drawEye(eyeLx, eyeY, false); 
+  drawEye(eyeRx, eyeY, true); 
 
   if (currentFace.mouthHeight > 0.5) {
-    float mouthX = 120;
-    float mouthY = 125;
+    float mouthX = 120 + currentFace.offsetX;
+    float mouthY = 125 + currentFace.offsetY;
     float w = currentFace.mouthWidth;
     float h = currentFace.mouthHeight;
     
@@ -267,12 +280,17 @@ void loop() {
     renderToScreen();
   }
 
-  if (now - stateChangeTimer > 5000) {
+  if (now - stateChangeTimer > 3000) {
     stateChangeTimer = now;
-    currentStateIndex = (currentStateIndex + 1) % 2;
+    currentStateIndex = (currentStateIndex + 1) % 7;
     switch(currentStateIndex) {
       case 0: targetFace = stateNormal; break;
-      case 1: targetFace = stateIdle; break;
+      case 1: targetFace = stateHappy; break;
+      case 2: targetFace = stateLookLeft; break;
+      case 3: targetFace = stateLookRight; break;
+      case 4: targetFace = stateSad; break;
+      case 5: targetFace = stateTalk; break;
+      case 6: targetFace = stateIdle; break;
     }
   }
 }
