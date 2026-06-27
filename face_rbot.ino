@@ -14,8 +14,8 @@ public:
     auto cfg = _bus_instance.config();
     // Cấu hình SPI ESP32-S3 (FSPI / SPI2)
     cfg.spi_host = SPI2_HOST;  
-    cfg.spi_mode = 0;          
-    cfg.freq_write = 40000000; // Tốc độ ổn định cho ST7789
+    cfg.spi_mode = 3;          // ĐỔI SANG MODE 3 (Nhiều màn hình ST7789 clone yêu cầu Mode 3 thay vì Mode 0)
+    cfg.freq_write = 20000000; // HẠ TẦN SỐ XUỐNG 20MHz để tránh méo tín hiệu trên dây Jumper
     cfg.spi_3wire = false;     
     cfg.use_lock = true;
     cfg.dma_channel = SPI_DMA_CH_AUTO; 
