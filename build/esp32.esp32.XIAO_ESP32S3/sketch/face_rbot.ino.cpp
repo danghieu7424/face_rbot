@@ -138,9 +138,9 @@ void updateFaceLogic();
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
 #line 510 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 884 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 902 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 916 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 934 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 123 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -541,6 +541,7 @@ void renderToScreen() {
   float rightBlink = -1.0f;
   float leftEyeScale = 1.0f; 
   float rightEyeScale = 1.0f;
+  float cryHiccupPower = 0.0f; // Sức mạnh của nhịp nấc để đồng bộ mắt và miệng
 
   // --- BỔ SUNG ANIMATION ĐỘNG CHO TẤT CẢ CÁC TRẠNG THÁI TĨNH CÒN LẠI ---
   // 0 (Idle) & 1 (Normal): Nhịp thở nhẹ nhàng, đều đặn
@@ -610,12 +611,14 @@ void renderToScreen() {
     // Nhịp nấc thứ nhất (luôn xảy ra)
     if (cycle < 250) { 
       float hiccupPhase = cycle / 250.0f; 
-      effY -= sin(hiccupPhase * PI) * 8.0f;
+      cryHiccupPower = sin(hiccupPhase * PI);
+      effY -= cryHiccupPower * 8.0f;
     }
     // Nhịp nấc thứ hai (xảy ra thi thoảng - cứ 3 chu kỳ thì bị 1 lần nấc đúp)
     else if (cycleIndex % 3 == 0 && cycle > 350 && cycle < 600) {
       float hiccupPhase = (cycle - 350) / 250.0f; 
-      effY -= sin(hiccupPhase * PI) * 8.0f;
+      cryHiccupPower = sin(hiccupPhase * PI);
+      effY -= cryHiccupPower * 8.0f;
     }
   }
 
@@ -792,6 +795,14 @@ void renderToScreen() {
   // Phối cảnh 3D hình thang (Pitch): Ngước lên (effY < 0) thì trên bé lại. Cúi xuống (effY > 0) thì dưới bé lại.
   float eyePitchFactor = -effY * 0.015f; 
 
+  // Khi nấc (Cry), nheo tịt mắt lại do cơ mặt co giật
+  if (cryHiccupPower > 0.01f) {
+    float blinkTarget = blinkFactor - (cryHiccupPower * 0.8f);
+    if (blinkTarget < 0.05f) blinkTarget = 0.05f;
+    leftBlink = blinkTarget;
+    rightBlink = blinkTarget;
+  }
+
   drawEye(eyeLx, eyeY, false, leftEyeScale, leftAngle, leftBlink, eyePitchFactor); 
   drawEye(eyeRx, eyeY, true, rightEyeScale, rightAngle, rightBlink, eyePitchFactor);
 
@@ -836,6 +847,13 @@ void renderToScreen() {
       float talkPhase = millis() / 150.0f;
       float talkFactor = 0.3f + 0.7f * abs(sin(talkPhase) * sin(talkPhase * 0.6f));
       h = h * talkFactor;
+    }
+    
+    // Khi khóc nấc, miệng phải há to ra một chút để "ngáp hơi" (Gasping for air)
+    if (cryHiccupPower > 0.01f) {
+      h += cryHiccupPower * 15.0f;
+      // Miệng sẽ hơi thu nhỏ chiều rộng lại khi há to ra (chữ O)
+      w -= cryHiccupPower * 5.0f;
     }
     
     if (h < 2) h = 2; // Guardrail: giữ miệng không bị sập hoàn toàn
