@@ -131,9 +131,9 @@ uint32_t lerpColor(uint32_t from, uint32_t to, float t);
 void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth);
 #line 443 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 587 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 592 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 619 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 624 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 114 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -497,31 +497,36 @@ void renderToScreen() {
     long elapsed = millis() - winkStartTime;
     float targetLook = winkDirection ? 40.0f : -40.0f; // winkDirection=true -> nhìn phải, false -> nhìn trái
 
-    // Giai đoạn 1: Liếc sang một bên
-    if (elapsed <= 400) {
-      winkOffset += (targetLook - winkOffset) * 0.15f; 
-    } else if (elapsed > 400 && elapsed <= 1000) {
-      winkOffset = targetLook; 
+    // Giai đoạn 1: Liếc sang một bên (Luôn nội suy mượt, không snap cứng để tránh bị "khựng")
+    if (elapsed <= 1000) {
+      winkOffset += (targetLook - winkOffset) * 0.2f; 
     } else {
-      winkOffset += (0.0f - winkOffset) * 0.15f; // Trôi về
+      winkOffset += (0.0f - winkOffset) * 0.2f; // Trôi về
     }
     
-    // Giai đoạn 2: Nháy mắt NGƯỢC LẠI hướng liếc
-    // Nhìn trái (targetLook < 0) -> Nháy MẮT PHẢI (rightBlink)
-    // Nhìn phải (targetLook > 0) -> Nháy MẮT TRÁI (leftBlink)
-    if (elapsed > 400 && elapsed <= 550) {
-      if (winkDirection) leftBlink = 1.0f - ((elapsed - 400) / 150.0f);
-      else rightBlink = 1.0f - ((elapsed - 400) / 150.0f);
-    } else if (elapsed > 550 && elapsed <= 700) {
-      if (winkDirection) leftBlink = ((elapsed - 550) / 150.0f);
-      else rightBlink = ((elapsed - 550) / 150.0f);
-    } else if (elapsed > 700 && elapsed <= 1000) {
-      if (winkDirection) leftBlink = 1.0f;
-      else rightBlink = 1.0f;
+    // Giai đoạn 2: Nháy mắt NGƯỢC LẠI hướng liếc (bắt đầu khi mắt đã liếc một chút)
+    if (elapsed > 300 && elapsed <= 450) {
+      // Đóng mắt cực nhanh (Ease-in)
+      float t = (elapsed - 300) / 150.0f;
+      float blinkVal = 1.0f - (t * t); 
+      if (winkDirection) leftBlink = blinkVal; else rightBlink = blinkVal;
+    } else if (elapsed > 450 && elapsed <= 650) {
+      // Mở mắt từ từ (Ease-out)
+      float t = (elapsed - 450) / 200.0f;
+      float blinkVal = t * t; 
+      if (winkDirection) leftBlink = blinkVal; else rightBlink = blinkVal;
+    } else if (elapsed > 650 && elapsed <= 1000) {
+      // Giữ trạng thái mở bình thường
+      if (winkDirection) leftBlink = 1.0f; else rightBlink = 1.0f;
     }
     
     if (leftBlink >= 0.0f && leftBlink < 0.05f) leftBlink = 0.05f; 
     if (rightBlink >= 0.0f && rightBlink < 0.05f) rightBlink = 0.05f; 
+
+    // Giai đoạn 3: Tự động trả về trạng thái Normal (1) khi hoạt cảnh hoàn tất
+    if (elapsed > 1200) {
+      targetEmotionCode = 1;
+    }
   } else {
     winkOffset += (0.0f - winkOffset) * 0.15f;
   }
