@@ -125,15 +125,15 @@ void learn(int state, int action, float reward, int nextState);
 void AITask(void *pvParameters);
 #line 209 "C:\\rust\\face_rbot\\face_rbot.ino"
 void updateFaceLogic();
-#line 280 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 284 "C:\\rust\\face_rbot\\face_rbot.ino"
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
-#line 298 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 302 "C:\\rust\\face_rbot\\face_rbot.ino"
 void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth);
-#line 439 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 443 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 583 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 587 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 615 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 619 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 114 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -272,7 +272,11 @@ void updateFaceLogic() {
     blinkDuration = 600; // Buồn ngủ: Mí mắt nặng trĩu, sụp mí rất lâu (600ms) mới mở lên lại
   }
 
-  if (now - lastBlinkTime > nextBlinkDelay) {
+  // Khóa chớp mắt tự động khi đang thực hiện Wink (11) để không bị trùng lặp, mất mượt mà
+  if (targetEmotionCode == 11) {
+    lastBlinkTime = now; 
+    targetBlinkFactor = 1.0;
+  } else if (now - lastBlinkTime > nextBlinkDelay) {
     targetBlinkFactor = 0.05; // Ép chiều cao về 5%
     if (now - lastBlinkTime > nextBlinkDelay + blinkDuration) { // Giữ mắt nhắm trong blinkDuration
       targetBlinkFactor = 1.0; // Mở mắt

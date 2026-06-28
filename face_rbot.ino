@@ -247,7 +247,11 @@ void updateFaceLogic() {
     blinkDuration = 600; // Buồn ngủ: Mí mắt nặng trĩu, sụp mí rất lâu (600ms) mới mở lên lại
   }
 
-  if (now - lastBlinkTime > nextBlinkDelay) {
+  // Khóa chớp mắt tự động khi đang thực hiện Wink (11) để không bị trùng lặp, mất mượt mà
+  if (targetEmotionCode == 11) {
+    lastBlinkTime = now; 
+    targetBlinkFactor = 1.0;
+  } else if (now - lastBlinkTime > nextBlinkDelay) {
     targetBlinkFactor = 0.05; // Ép chiều cao về 5%
     if (now - lastBlinkTime > nextBlinkDelay + blinkDuration) { // Giữ mắt nhắm trong blinkDuration
       targetBlinkFactor = 1.0; // Mở mắt
