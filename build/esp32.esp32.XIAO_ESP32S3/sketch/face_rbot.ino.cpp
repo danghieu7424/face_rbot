@@ -131,9 +131,9 @@ uint32_t lerpColor(uint32_t from, uint32_t to, float t);
 void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth);
 #line 443 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 592 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 605 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 624 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 637 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 114 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -478,15 +478,28 @@ void renderToScreen() {
     effY += cos(millis() / 150.0f) * 8.0f;
   }
   
-  // Nhìn xung quanh (LookAround - Code 12) mượt mà độc lập với miệng
-  static float lookAroundOffset = 0.0f;
+  // Nhìn xung quanh (LookAround - Code 12) kiểu nhìn bất định (Random Wandering)
+  static float lookAroundOffsetX = 0.0f;
+  static float lookAroundOffsetY = 0.0f;
+  static float targetLookX = 0.0f;
+  static float targetLookY = 0.0f;
+  static unsigned long lastLookTime = 0;
+
   if (targetEmotionCode == 12) {
-    float targetLook = ((millis() / 2000) % 2 == 0) ? -30.0f : 30.0f;
-    lookAroundOffset += (targetLook - lookAroundOffset) * 0.1f; // Nội suy mượt mà
+    // Nếu quá thời gian, chọn một điểm nhìn mới ngẫu nhiên (từ 0.8s đến 2s)
+    if (millis() - lastLookTime > random(800, 2000)) { 
+      targetLookX = random(-35, 36); // Liếc qua lại trục X
+      targetLookY = random(-20, 21); // Liếc lên xuống trục Y
+      lastLookTime = millis();
+    }
+    lookAroundOffsetX += (targetLookX - lookAroundOffsetX) * 0.1f; 
+    lookAroundOffsetY += (targetLookY - lookAroundOffsetY) * 0.1f; 
   } else {
-    lookAroundOffset += (0.0f - lookAroundOffset) * 0.1f; // Trả về giữa
+    lookAroundOffsetX += (0.0f - lookAroundOffsetX) * 0.1f; // Trả về giữa
+    lookAroundOffsetY += (0.0f - lookAroundOffsetY) * 0.1f;
   }
-  effX += lookAroundOffset;
+  effX += lookAroundOffsetX;
+  effY += lookAroundOffsetY;
 
   // Hiệu ứng Nháy mắt (Wink - Code 11): Liếc mắt trái -> nháy mắt phải -> trả về
   static float winkOffset = 0.0f;
