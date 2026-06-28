@@ -502,6 +502,11 @@ void renderToScreen() {
   // Áp dụng offsetX, offsetY để mô phỏng trục xoay cổ
   float effX = currentFace.offsetX;
   float effY = currentFace.offsetY;
+  
+  float leftBlink = -1.0f;
+  float rightBlink = -1.0f;
+  float leftEyeScale = 1.0f; 
+  float rightEyeScale = 1.0f;
 
   // Hiệu ứng Chóng mặt (Dizzy - Code 10): Xoay vòng vòng
   if (targetEmotionCode == 10) { 
@@ -581,8 +586,6 @@ void renderToScreen() {
 
   // Hiệu ứng Nháy mắt (Wink - Code 11): Liếc mắt trái -> nháy mắt phải -> trả về
   static float winkOffset = 0.0f;
-  float leftBlink = -1.0f;
-  float rightBlink = -1.0f;
 
   if (targetEmotionCode == 11) {
     long elapsed = millis() - winkStartTime;
@@ -629,8 +632,8 @@ void renderToScreen() {
   float eyeY  = 90 + effY;
 
   // Giả lập chiều sâu 3D (Parallax): Mắt ở hướng nhìn ngược lại sẽ to hơn
-  float leftEyeScale = 1.0f + (effX * 0.002f); 
-  float rightEyeScale = 1.0f - (effX * 0.002f);
+  leftEyeScale += (effX * 0.002f); 
+  rightEyeScale -= (effX * 0.002f);
   
   // Phối cảnh 3D hình thang (Pitch): Ngước lên (effY < 0) thì trên bé lại. Cúi xuống (effY > 0) thì dưới bé lại.
   float eyePitchFactor = -effY * 0.015f; 
