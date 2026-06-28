@@ -130,9 +130,9 @@ uint32_t lerpColor(uint32_t from, uint32_t to, float t);
 void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth);
 #line 452 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 596 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 589 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 628 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 621 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 113 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -536,16 +536,9 @@ void renderToScreen() {
   float leftEyeScale = 1.0f + (effX * 0.002f); 
   float rightEyeScale = 1.0f - (effX * 0.002f);
 
-  // Hiệu ứng Ngủ (Sleep - Code 5): Nháy mắt 1 lần nhanh, chờ 1 chút rồi mới nhắm hẳn
-  if (targetEmotionCode == 5) {
-    long elapsed = millis() - sleepStartTime;
-    if (elapsed < 150) { leftBlink = rightBlink = 1.0f - (elapsed / 150.0f); }
-    else if (elapsed < 300) { leftBlink = rightBlink = (elapsed - 150) / 150.0f; }
-    // Từ 300ms -> 1000ms: Để mắt mở bình thường (chờ một chút)
-    else if (elapsed < 1000) { leftBlink = rightBlink = 1.0f; }
-    // Sau 1000ms, loop() sẽ gán targetFace = stateSleep, và updateFaceLogic() tự động làm mắt khép lại mượt mà.
-  }
-  
+  // Hiệu ứng Ngủ (Sleep - Code 5) đã được trả về cho hệ thống global blinkFactor (mượt mà hơn).
+  // Hệ thống sẽ tự nháy 2 lần, sau 1.5s loop() mới kích hoạt mắt khép xuống dần dần.
+
   drawEye(eyeLx, eyeY, false, leftEyeScale, 0.0f, leftBlink); 
   drawEye(eyeRx, eyeY, true, rightEyeScale, 0.0f, rightBlink);
 
@@ -658,6 +651,9 @@ void loop() {
     }
     if (targetEmotionCode == 5) {
       sleepStartTime = millis(); // Reset đồng hồ đo Sleep
+      sleepBlinkCount = 2; // Tái kích hoạt 2 lần chớp mắt mượt mà của hệ thống gốc
+      nextBlinkDelay = 100; // Bắt đầu nháy ngay sau 100ms
+      lastBlinkTime = millis();
     }
     lastEmotionCode = targetEmotionCode;
   }
@@ -670,8 +666,8 @@ void loop() {
     case 3: targetFace = stateSad; break;
     case 4: targetFace = stateTalk; break;
     case 5: 
-      // Đợi 1000ms (lúc mắt đang nháy và chờ) rồi mới gán stateSleep để mắt từ từ nhắm xuống
-      if (millis() - sleepStartTime > 1000) {
+      // Đợi 1500ms (cho hệ thống gốc nháy mượt mà xong 2 lần) rồi mới gán stateSleep để nhắm tịt
+      if (millis() - sleepStartTime > 1500) {
         targetFace = stateSleep; 
       } else {
         targetFace = stateNormal; 
