@@ -514,6 +514,43 @@ void renderToScreen() {
   float leftEyeScale = 1.0f; 
   float rightEyeScale = 1.0f;
 
+  // --- BỔ SUNG ANIMATION ĐỘNG CHO CÁC TRẠNG THÁI TĨNH ---
+  // 2 (Happy): Cười hớn hở nảy lên nảy xuống
+  if (targetEmotionCode == 2) {
+    effY += sin(millis() / 150.0f) * 6.0f;
+  }
+  
+  // 3 (Sad): Thở dài chậm chạp, cúi gằm mặt
+  if (targetEmotionCode == 3) {
+    effY += sin(millis() / 600.0f) * 3.0f;
+  }
+
+  // 6 (Angry): Thở dốc, phập phồng và rung nhẹ vì tức giận
+  if (targetEmotionCode == 6) {
+    effX += random(-1, 2); 
+    effY += sin(millis() / 100.0f) * 2.5f;
+  }
+
+  // 7 (Surprised): Bàng hoàng, nhịp tim đập nhanh nhấp nhô
+  if (targetEmotionCode == 7) {
+    effY += sin(millis() / 100.0f) * 3.0f; 
+  }
+
+  // 9 (Cry): Khóc run người, thỉnh thoảng nấc cụt
+  if (targetEmotionCode == 9) {
+    effY += sin(millis() / 300.0f) * 2.0f; // Run nhẹ
+    if (millis() % 1500 < 150) { // Mỗi 1.5s nấc một cái (kéo giật mắt lên trên)
+      effY -= 8.0f;
+    }
+  }
+
+  // 14 (Smug): Đắc ý lắc lư cái đầu qua lại (Hình oval dẹt)
+  // Lưu ý: Smug (14) đã có lerp mouthAngle, phần này chỉ thêm lắc lư đầu
+  if (targetEmotionCode == 14) {
+    effX += sin(millis() / 250.0f) * 5.0f; 
+    effY += cos(millis() / 250.0f) * 2.0f;
+  }
+
   // Hiệu ứng Chóng mặt (Dizzy - Code 10): Xoay vòng vòng
   if (targetEmotionCode == 10) { 
     effX += sin(millis() / 150.0f) * 8.0f; // Giảm biên độ quay

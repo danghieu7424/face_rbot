@@ -137,9 +137,9 @@ void updateFaceLogic();
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
 #line 505 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 770 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 768 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 802 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 800 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 122 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -567,8 +567,6 @@ void renderToScreen() {
 
   float leftAngle = 0.0f;
   float rightAngle = 0.0f;
-  float leftBlink = -1.0f;
-  float rightBlink = -1.0f;
 
   // Sus (19): Ánh mắt phán xét (Nghiêng đầu nhẹ, liếc xéo, nheo cả 2 mắt)
   // Dùng susWeight để Lerp mượt mà mọi thông số, tránh hiện tượng nhảy (Snap)
