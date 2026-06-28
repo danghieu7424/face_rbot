@@ -74,6 +74,10 @@ const FaceState stateDoubt     = {0, 35, 15,  5,  0, 4, 14,  4, 15, 2, 4,  25,  
 const FaceState stateCry       = {0, 35, 20, 10,-15, 4, 14, 7, 20, 2, 4,   0,  10}; // Mắt nheo xuống, mếu máo
 const FaceState stateDizzy     = {0, 40, 50, 20,  0, 4, 14, 20, 20, 2, 4,   0,   0}; // Hình dáng bình thường nhưng sẽ quay vòng vòng
 const FaceState stateWink      = {0, 40, 50, 20,  7, 4, 14, 15, 40, 2, 4,   0,   0}; // Một mắt nhắm một mắt mở (xử lý logic riêng)
+const FaceState statePanic     = {0, 65, 65, 32,  0, 4, 14,  5, 15, 2, 4,   0,   0}; // Mắt mở to tròn hết cỡ, miệng chữ O nhỏ
+const FaceState stateSmug      = {2, 40, 30, 15,-15, 4, 14,  5, 25, 2, 4,  10,-10}; // Bán nguyệt dưới, liếc ngước, miệng nhếch lệch
+const FaceState stateScan      = {3, 40,  5,  2,  0, 4, 14,  2, 40, 2, 4,   0,   0}; // Mắt viên thuốc dẹt ngang, mồm dẹt mỏng
+const FaceState stateBored     = {3, 40, 15,  7,  0, 4, 14,  5, 20, 2, 4,   0,  25}; // Mắt nửa vời, cúi gập gục đầu
 
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle;
@@ -95,7 +99,7 @@ enum SoundState { QUIET = 0, NOISY = 1 };
 enum TouchState { UNTOUCHED = 0, TOUCHED = 1 };
 
 const int NUM_STATES = 3 * 2 * 2; // 12 Trạng thái
-const int NUM_ACTIONS = 13; // 13 Biểu cảm (Idle, Normal, Happy, Sad, Talk, Sleep, Angry, Surprised, Doubt, Cry, Dizzy, Wink, LookAround)
+const int NUM_ACTIONS = 17; // 17 Biểu cảm (Idle, Normal, Happy, Sad, Talk, Sleep, Angry, Surprised, Doubt, Cry, Dizzy, Wink, LookAround, Panic, Smug, Scan, Bored)
 
 // 2. Q-Table (Bộ nhớ Kinh nghiệm)
 float qTable[NUM_STATES][NUM_ACTIONS] = {0.0}; 
@@ -169,10 +173,11 @@ void learn(int state, int action, float reward, int nextState) {
 void AITask(void *pvParameters) {
   Serial.println("=========================================");
   Serial.println("AI DANG DUOC TAM DUNG DE DEBUG.");
-  Serial.println("Vui long nhap so tu 0 den 12 de doi mat:");
+  Serial.println("Vui long nhap so tu 0 den 16 de doi mat:");
   Serial.println("0:Idle 1:Normal 2:Happy 3:Sad 4:Talk 5:Sleep");
   Serial.println("6:Angry 7:Surprised 8:Doubt 9:Cry 10:Dizzy");
-  Serial.println("11:Wink 12:LookAround");
+  Serial.println("11:Wink 12:LookAround 13:Panic 14:Smug");
+  Serial.println("15:Scan 16:Bored");
   Serial.println("=========================================");
 
   // int currentState = getStateIndex(currentTemp, currentSound, currentTouch);
@@ -245,6 +250,8 @@ void updateFaceLogic() {
     blinkDuration = 50;
   } else if (targetEmotionCode == 5 && targetFace.eyeHeight != stateSleep.eyeHeight) {
     blinkDuration = 600; // Buồn ngủ: Mí mắt nặng trĩu, sụp mí rất lâu (600ms) mới mở lên lại
+  } else if (targetEmotionCode == 16) {
+    blinkDuration = 800; // Bored: Mở mắt chậm lờ đờ
   }
 
   // Khóa chớp mắt tự động khi đang thực hiện Wink (11) để không bị trùng lặp, mất mượt mà
@@ -275,6 +282,8 @@ void updateFaceLogic() {
     blinkSpeed = 0.7f;
   } else if (targetEmotionCode == 5 && targetFace.eyeHeight != stateSleep.eyeHeight) {
     blinkSpeed = 0.15f; // Buồn ngủ: Mí mắt sụp xuống chậm rãi, lờ đờ
+  } else if (targetEmotionCode == 16) {
+    blinkSpeed = 0.1f; // Bored: Tốc độ nháy mắt cực kỳ lề mề
   }
   
   blinkFactor += (targetBlinkFactor - blinkFactor) * blinkSpeed; 
@@ -458,6 +467,17 @@ void renderToScreen() {
   if (targetEmotionCode == 10) { 
     effX += sin(millis() / 150.0f) * 8.0f; // Giảm biên độ quay
     effY += cos(millis() / 150.0f) * 8.0f;
+  }
+  
+  // Hiệu ứng Hoảng sợ (Panic - Code 13): Rung lắc liên tục
+  if (targetEmotionCode == 13) {
+    effX += random(-2, 4); 
+    effY += random(-2, 4);
+  }
+
+  // Hiệu ứng Quét Radar (Scan - Code 15): Mắt trượt qua lại đều đặn
+  if (targetEmotionCode == 15) {
+    effX += sin(millis() / 300.0f) * 35.0f;
   }
   
   // Nhìn xung quanh (LookAround - Code 12) kiểu nhìn bất định (Random Wandering)
@@ -706,6 +726,10 @@ void loop() {
     case 10: targetFace = stateDizzy; break;
     case 11: targetFace = stateNormal; break; // Nháy mắt như khuôn mặt 1 (Normal)
     case 12: break; // LookAround -> KHÔNG gán targetFace, giữ nguyên biểu cảm miệng hiện tại
+    case 13: targetFace = statePanic; break;
+    case 14: targetFace = stateSmug; break;
+    case 15: targetFace = stateScan; break;
+    case 16: targetFace = stateBored; break;
     default: targetFace = stateIdle; break;
   }
 
