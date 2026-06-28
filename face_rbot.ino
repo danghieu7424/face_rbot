@@ -67,7 +67,7 @@ const FaceState stateSad       = {0, 35, 40, 15,-10, 4, 14,  4, 20, 2, 4,   0,  
 const FaceState stateLookLeft  = {0, 35, 50, 20,  5, 4, 14,  5, 25, 2, 4, -30,   0};
 const FaceState stateLookRight = {0, 35, 50, 20,  5, 4, 14,  5, 25, 2, 4,  30,   0};
 const FaceState stateTalk      = {0, 38, 55, 18,  7, 4, 14, 35, 30, 2, 4,   0,  -2};
-const FaceState stateSleep     = {0, 40,  7,  3,  0, 4, 14,  0,  0, 0, 0,   0,  15}; // Mắt khép nhỏ, đầu cúi xuống (offsetY=15)
+const FaceState stateSleep     = {0, 40,  5,  3,  0, 4, 14,  0,  0, 0, 0,   0,  15}; // Mắt khép nhỏ, đầu cúi xuống (offsetY=15)
 const FaceState stateAngry     = {0, 40, 25, 10, 25, 4, 14,  5, 40, 2, 4,   0,   5}; // Mắt dẹt, góc nghiêng gắt, miệng rộng và bẹt
 const FaceState stateSurprised = {0, 50, 60, 25,  0, 4, 14, 40, 25, 2, 4,   0, -15}; // Mắt mở to tròn, miệng chữ O dài, đầu giật lên
 const FaceState stateDoubt     = {0, 35, 15,  5,  0, 4, 14,  4, 15, 2, 4,  25,   5}; // Mắt híp (squint), liếc sang một bên nghi ngờ
@@ -271,8 +271,8 @@ void updateFaceLogic() {
     blinkDuration = random(20, 100); // Glitch: Giật nhanh
   }
 
-  // Khóa chớp mắt tự động khi đang thực hiện Wink (11) để không bị trùng lặp, mất mượt mà
-  if (targetEmotionCode == 11) {
+  // Khóa chớp mắt tự động khi đang thực hiện Wink (11) hoặc Dizzy (10) để không bị đứt đoạn animation
+  if (targetEmotionCode == 11 || targetEmotionCode == 10) {
     lastBlinkTime = now; 
     targetBlinkFactor = 1.0;
   } else if (now - lastBlinkTime > nextBlinkDelay) {
@@ -460,7 +460,7 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
 
   if (targetEmotionCode == 10) {
     // 2. Vẽ Hiệu ứng Xoáy Thôi Miên
-    uint32_t color = colorTop; // Dùng trực tiếp RGB888
+    uint32_t color = 0xFFFF00; // Dùng màu Vàng rực (Yellow) để tăng tương phản tuyệt đối trên nền mắt!
 
     float spin = millis() * 0.3f; // Tốc độ xoay
     for (int r = 5; r < (w / 2) - 2; r += 6) {
@@ -517,7 +517,7 @@ void renderToScreen() {
   // --- BỔ SUNG ANIMATION ĐỘNG CHO TẤT CẢ CÁC TRẠNG THÁI TĨNH CÒN LẠI ---
   // 0 (Idle) & 1 (Normal): Nhịp thở rất nhẹ nhàng, đều đặn
   if (targetEmotionCode == 0 || targetEmotionCode == 1) {
-    effY += sin(millis() / 800.0f) * 1.5f;
+    effY += sin(millis() / 800.0f) * 3.0f; // Biên độ tăng lên để dễ thấy nhịp thở
   }
 
   // 4 (Talk): Gật gù, nhún nhảy khi nói chuyện
@@ -893,16 +893,27 @@ void loop() {
     case 2: targetFace = stateHappy; break;
     case 3: targetFace = stateSad; break;
     case 4: targetFace = stateTalk; break;
-    case 5: 
-      // Đợi 2500ms (cho nhịp nháy mắt lờ đờ diễn ra trọn vẹn) rồi mới gán stateSleep để gục hẳn
-      if (millis() - sleepStartTime > 2500) {
-        targetFace = stateSleep; 
+    case 5: {
+      // Chuỗi hiệu ứng Sleep: Chớp mắt mệt mỏi -> Ngáp dài -> Nhắm mắt gục ngủ
+      unsigned long elapsed = millis() - sleepStartTime;
+      if (elapsed > 3500) {
+        targetFace = stateSleep; // Gục hẳn
+      } else if (elapsed > 1200) {
+        // Giai đoạn Ngáp (Yawn): Miệng mở to chữ O, mắt nhắm hờ, đầu hơi ngước
+        targetFace = stateNormal; 
+        targetFace.eyeAngle = 0; 
+        targetFace.eyeHeight = 25;   // Mắt sụp xuống một nửa
+        targetFace.offsetY = -5;     // Đầu ngước lên ngáp
+        targetFace.mouthHeight = 35; // Mở mồm to hết cỡ
+        targetFace.mouthWidth = 20;  // Mồm thu hẹp lại chữ O
       } else {
+        // Giai đoạn chớp mắt lờ đờ ban đầu
         targetFace = stateNormal; 
         targetFace.eyeAngle = 0; // Quan trọng: Ép mắt phẳng ngang lờ đờ để mí sụp không bị tạo hình chữ V (giận dữ)
         targetFace.offsetY = 8;  // Đầu đã bắt đầu cúi gục nhẹ
       }
       break;
+    }
     case 6: targetFace = stateAngry; break;
     case 7: targetFace = stateSurprised; break;
     case 8: targetFace = stateDoubt; break;
