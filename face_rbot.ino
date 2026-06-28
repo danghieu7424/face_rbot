@@ -656,6 +656,8 @@ void loop() {
         targetFace = stateSleep; 
       } else {
         targetFace = stateNormal; 
+        targetFace.eyeAngle = 0; // Quan trọng: Ép mắt phẳng ngang lờ đờ để mí sụp không bị tạo hình chữ V (giận dữ)
+        targetFace.offsetY = 8;  // Đầu đã bắt đầu cúi gục nhẹ
       }
       break;
     case 6: targetFace = stateAngry; break;
