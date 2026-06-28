@@ -900,23 +900,26 @@ void loop() {
   // 1. Kiểm tra Cảm biến chạm (Touch Sensor) trên Core 1
   int touchValue = touchRead(TOUCH_PIN);
   
-  // Debug tạm thời trên Core 1 để xem có nhận được giá trị 95730 không
-  static unsigned long lastDebugTime = 0;
-  if (millis() - lastDebugTime > 1000) {
-    Serial.print("[DEBUG Core1] Gia tri Touch: ");
-    Serial.println(touchValue);
-    lastDebugTime = millis();
-  }
+  static int savedEmotionCode = 1;
+  static bool isBeingPetted = false;
 
   if (touchValue > touchThreshold) {
-    // Chống dội (Debounce) 500ms để 1 lần chạm không nhảy liên tục
-    if (millis() - lastTouchTime > 500) { 
-      targetEmotionCode = (targetEmotionCode + 1) % NUM_ACTIONS;
-      Serial.print(">> [TOUCH] Phat hien cham! Gia tri: ");
+    if (!isBeingPetted) {
+      isBeingPetted = true;
+      savedEmotionCode = targetEmotionCode; // Lưu lại trạng thái cũ trước khi bị vuốt ve
+      targetEmotionCode = 17; // 17 là trạng thái Love (Mắt to tròn long lanh, miệng cười tươi, đầu bồng bềnh)
+      Serial.print(">> [TOUCH] Phat hien vuot ve! (Touch = ");
       Serial.print(touchValue);
-      Serial.print(" -> Chuyen sang trang thai: ");
+      Serial.println(") -> Chuyen sang trang thai 17 (Love)");
+    }
+    lastTouchTime = millis(); // Liên tục cập nhật thời gian chừng nào còn giữ tay
+  } else {
+    // Đợi 1 giây (1000ms) sau khi buông tay để tự động trở về biểu cảm cũ
+    if (isBeingPetted && (millis() - lastTouchTime > 1000)) {
+      isBeingPetted = false;
+      targetEmotionCode = savedEmotionCode; 
+      Serial.print(">> [TOUCH] Da tha tay -> Phuc hoi trang thai cu: ");
       Serial.println(targetEmotionCode);
-      lastTouchTime = millis();
     }
   }
 
