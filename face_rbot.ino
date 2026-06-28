@@ -78,6 +78,10 @@ const FaceState statePanic     = {0, 65, 65, 32,  0, 4, 14,  5, 15, 2, 4,   0,  
 const FaceState stateSmug      = {1, 40, 20, 15, 10, 4, 14,  5, 25, 2, 4,  10, -5}; // Bán nguyệt trên, liếc ngước, miệng nhếch lệch
 const FaceState stateScan      = {0, 50, 50, 20,  0, 4, 14,  2, 40, 2, 4,   0,   0}; // Mắt bình thường, bên trong có radar quét
 const FaceState stateBored     = {3, 40, 25, 10,  0, 4, 14,  2, 45, 2, 4,   0,  25}; // Mắt nửa vời, cúi gập gục đầu, miệng ngang dài
+const FaceState stateLove      = {0, 55, 55, 25,  0, 4, 14, 25, 40, 2, 4,   0,  -5}; // Mắt to tròn long lanh, miệng cười tươi
+const FaceState stateGlitch    = {4, 40, 40, 10,  0, 4, 14, 10, 30, 2, 4,   0,   0}; // Mắt vuông, giật lag loạn xạ
+const FaceState stateSus       = {0, 40, 35, 17,  0, 4, 14,  5, 20, 2, 4,   0,   0}; // Hình thái cơ bản, sẽ bị override nháy 1 mắt
+const FaceState stateFurious   = {2, 45, 25, 10, 25, 4, 14,  5, 45, 2, 4,   0,  15}; // Rất tức giận, ngước mặt, mồm há to
 
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle;
@@ -99,7 +103,7 @@ enum SoundState { QUIET = 0, NOISY = 1 };
 enum TouchState { UNTOUCHED = 0, TOUCHED = 1 };
 
 const int NUM_STATES = 3 * 2 * 2; // 12 Trạng thái
-const int NUM_ACTIONS = 17; // 17 Biểu cảm (Idle, Normal, Happy, Sad, Talk, Sleep, Angry, Surprised, Doubt, Cry, Dizzy, Wink, LookAround, Panic, Smug, Scan, Bored)
+const int NUM_ACTIONS = 21; // 21 Biểu cảm (Idle, Normal, Happy, Sad, Talk, Sleep, Angry, Surprised, Doubt, Cry, Dizzy, Wink, LookAround, Panic, Smug, Scan, Bored, Love, Glitch, Sus, Furious)
 
 // 2. Q-Table (Bộ nhớ Kinh nghiệm)
 float qTable[NUM_STATES][NUM_ACTIONS] = {0.0}; 
@@ -173,11 +177,11 @@ void learn(int state, int action, float reward, int nextState) {
 void AITask(void *pvParameters) {
   Serial.println("=========================================");
   Serial.println("AI DANG DUOC TAM DUNG DE DEBUG.");
-  Serial.println("Vui long nhap so tu 0 den 16 de doi mat:");
+  Serial.println("Vui long nhap so tu 0 den 20 de doi mat:");
   Serial.println("0:Idle 1:Normal 2:Happy 3:Sad 4:Talk 5:Sleep");
   Serial.println("6:Angry 7:Surprised 8:Doubt 9:Cry 10:Dizzy");
   Serial.println("11:Wink 12:LookAround 13:Panic 14:Smug");
-  Serial.println("15:Scan 16:Bored");
+  Serial.println("15:Scan 16:Bored 17:Love 18:Glitch 19:Sus 20:Furious");
   Serial.println("=========================================");
 
   // int currentState = getStateIndex(currentTemp, currentSound, currentTouch);
@@ -193,7 +197,7 @@ void AITask(void *pvParameters) {
         Serial.print(">> Chuyen sang trang thai: ");
         Serial.println(code);
       } else {
-        Serial.println("Loi: Ma cam xuc phai tu 0 den 12.");
+        Serial.println("Loi: Ma cam xuc phai tu 0 den 20.");
       }
     }
 
@@ -252,6 +256,8 @@ void updateFaceLogic() {
     blinkDuration = 600; // Buồn ngủ: Mí mắt nặng trĩu, sụp mí rất lâu (600ms) mới mở lên lại
   } else if (targetEmotionCode == 16) {
     blinkDuration = 800; // Bored: Mở mắt chậm lờ đờ
+  } else if (targetEmotionCode == 18) {
+    blinkDuration = random(20, 100); // Glitch: Giật nhanh
   }
 
   // Khóa chớp mắt tự động khi đang thực hiện Wink (11) để không bị trùng lặp, mất mượt mà
@@ -268,6 +274,8 @@ void updateFaceLogic() {
       if (sleepBlinkCount > 0) {
         sleepBlinkCount--;
         nextBlinkDelay = 300; // Nháy lại ngay lập tức sau 300ms
+      } else if (targetEmotionCode == 18) {
+        nextBlinkDelay = random(100, 500); // Giật chớp liên tục
       } else if (targetFace.eyeHeight == stateSurprised.eyeHeight) {
         nextBlinkDelay = random(1000, 2500); // Ngạc nhiên: tần suất chớp mắt cao hơn (1-2.5s)
       } else {
@@ -421,6 +429,16 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
   uint32_t colorBot    = 0x00D200; // (0, 210, 0)
   uint32_t shadowColor = 0x00C800; // (0, 200, 0)
 
+  if (targetEmotionCode == 20) { // Furious -> Đỏ rực
+    colorTop    = 0xFF0000;
+    colorMid    = 0xDD0000;
+    colorBot    = 0xBB0000;
+    shadowColor = 0x880000;
+  } else if (targetEmotionCode == 18 && random(10) > 8) { // Glitch -> Nhiễu màu ngẫu nhiên
+    colorTop = random(0xFFFFFF);
+    colorBot = random(0xFFFFFF);
+  }
+
   float actualBlink = (customBlink >= 0.0f) ? customBlink : blinkFactor;
   float w = currentFace.eyeWidth * scale3D;
   float h = currentFace.eyeHeight * actualBlink * scale3D; // Áp dụng Blink Override & 3D Scale
@@ -495,6 +513,34 @@ void renderToScreen() {
   if (targetEmotionCode == 13) {
     effX += random(-2, 4); 
     effY += random(-2, 4);
+  }
+
+  // Love (17): Bồng bềnh, nhịp đập
+  if (targetEmotionCode == 17) {
+    float pulse = sin(millis() / 150.0f) * 0.15f; 
+    leftEyeScale += pulse;
+    rightEyeScale += pulse;
+    effY += sin(millis() / 400.0f) * 5.0f; // Bồng bềnh
+  }
+
+  // Glitch (18): Lag giật cục
+  if (targetEmotionCode == 18) {
+    if (random(10) > 7) {
+      effX += random(-15, 16);
+      effY += random(-15, 16);
+    }
+  }
+
+  // Sus (19): Nháy híp 1 mắt
+  if (targetEmotionCode == 19) {
+    rightBlink = 0.3f; // Híp mắt phải
+    effY += 5.0f;
+  }
+
+  // Furious (20): Rung nhẹ (sôi máu)
+  if (targetEmotionCode == 20) {
+    effX += random(-1, 2);
+    effY += random(-1, 2);
   }
   
   // Nhìn xung quanh (LookAround - Code 12) kiểu nhìn bất định (Random Wandering)
@@ -652,12 +698,22 @@ void renderToScreen() {
     uint32_t colorBot    = 0x00D200;
     uint32_t shadowColor = 0x00C800;
 
+    if (targetEmotionCode == 20) {
+      colorTop    = 0xFF0000;
+      colorMid    = 0xDD0000;
+      colorBot    = 0xBB0000;
+      shadowColor = 0x880000;
+    } else if (targetEmotionCode == 18 && random(10) > 8) {
+      colorTop = random(0xFFFFFF);
+      colorBot = random(0xFFFFFF);
+    }
+
     // Cả miệng cũng chịu hiệu ứng Trapezoid Pitch như mắt để đồng bộ (cùng nghiêng mặt)
     float mouthPitchFactor = -effY * 0.015f;
 
-    // Hiệu ứng Smug (Code 14): Nhếch mép nghiêng mồm
+    // Hiệu ứng Smug (14) & Sus (19): Nhếch mép nghiêng mồm
     float mouthAngle = 0.0f;
-    if (targetEmotionCode == 14) mouthAngle = 10.0f;
+    if (targetEmotionCode == 14 || targetEmotionCode == 19) mouthAngle = 10.0f;
 
     if (mouthAngle != 0.0f) {
       eyeSprite.fillSprite(TFT_BLACK);
@@ -765,6 +821,10 @@ void loop() {
     case 14: targetFace = stateSmug; break;
     case 15: targetFace = stateScan; break;
     case 16: targetFace = stateBored; break;
+    case 17: targetFace = stateLove; break;
+    case 18: targetFace = stateGlitch; break;
+    case 19: targetFace = stateSus; break;
+    case 20: targetFace = stateFurious; break;
     default: targetFace = stateIdle; break;
   }
 
