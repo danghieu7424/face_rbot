@@ -557,14 +557,14 @@ void renderToScreen() {
   float leftAngle = 0.0f;
   float rightAngle = 0.0f;
 
-  // Sus (19): Ánh mắt phán xét (Nghiêng đầu, liếc xéo, nhướng mày)
+  // Sus (19): Ánh mắt phán xét (Nghiêng đầu nhẹ, liếc xéo, nheo cả 2 mắt)
   if (targetEmotionCode == 19) {
-    leftEyeScale = 1.3f;    // Mở to mắt trái
-    rightEyeScale = 0.8f;   // Thu gọn mắt phải (nhíu mày tự nhiên, không bị nhắm xịt)
-    leftAngle = 15.0f;      // Nhướng mày trái lên (góc quay 15 độ)
-    rightAngle = -15.0f;    // Cụp mày phải xuống (góc quay -15 độ)
-    effX += 20.0f;          // Liếc xéo sang phải
-    effY -= 10.0f;          // Đầu ngước tự cao
+    leftBlink = 0.55f;      // Nheo mắt trái
+    rightBlink = 0.55f;     // Nheo mắt phải
+    leftAngle = 5.0f;       // Nghiêng nhẹ vào trong (tạo nếp nhăn cau mày)
+    rightAngle = -5.0f;     // Nghiêng nhẹ vào trong
+    effX += 15.0f;          // Liếc xéo sang phải nhẹ nhàng
+    effY -= 5.0f;           // Đầu ngước nhẹ
   }
 
   // Furious (20): Rung nhẹ (sôi máu)
