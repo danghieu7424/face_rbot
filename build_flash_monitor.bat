@@ -22,6 +22,6 @@ if %ERRORLEVEL% NEQ 0 (
 
 REM [CHÚ THÍCH] BƯỚC 3: NẠP FLASH VÀ MỞ MONITOR
 echo [INFO] Bien dich thanh cong. Bat dau nap Flash qua espflash...
-espflash flash --chip esp32s3 "%ELF_FILE%"
+espflash flash --monitor --chip esp32s3 "%ELF_FILE%"
 
 endlocal
