@@ -467,11 +467,24 @@ void renderToScreen() {
       targetLookY = random(-20, 21); // Liếc lên xuống trục Y
       lastLookTime = millis();
     }
-    lookAroundOffsetX += (targetLookX - lookAroundOffsetX) * 0.1f; 
-    lookAroundOffsetY += (targetLookY - lookAroundOffsetY) * 0.1f; 
+    // Tính toán khoảng cách nội suy
+    float stepX = (targetLookX - lookAroundOffsetX) * 0.05f; 
+    float stepY = (targetLookY - lookAroundOffsetY) * 0.05f; 
+    
+    // Giới hạn tốc độ liếc tối đa để mắt trôi đi mượt mà, không bị "giật cái" khi khoảng cách quá xa
+    if (stepX > 1.2f) stepX = 1.2f; if (stepX < -1.2f) stepX = -1.2f;
+    if (stepY > 1.2f) stepY = 1.2f; if (stepY < -1.2f) stepY = -1.2f;
+    
+    lookAroundOffsetX += stepX;
+    lookAroundOffsetY += stepY;
   } else {
-    lookAroundOffsetX += (0.0f - lookAroundOffsetX) * 0.1f; // Trả về giữa
-    lookAroundOffsetY += (0.0f - lookAroundOffsetY) * 0.1f;
+    // Khi thoát trạng thái, cũng từ từ trôi về giữa một cách êm ái
+    float stepX = (0.0f - lookAroundOffsetX) * 0.05f;
+    float stepY = (0.0f - lookAroundOffsetY) * 0.05f;
+    if (stepX > 1.2f) stepX = 1.2f; if (stepX < -1.2f) stepX = -1.2f;
+    if (stepY > 1.2f) stepY = 1.2f; if (stepY < -1.2f) stepY = -1.2f;
+    lookAroundOffsetX += stepX; 
+    lookAroundOffsetY += stepY;
   }
   effX += lookAroundOffsetX;
   effY += lookAroundOffsetY;
