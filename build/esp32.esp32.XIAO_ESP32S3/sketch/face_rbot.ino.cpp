@@ -983,7 +983,7 @@ void loop() {
     case 9: targetFace = stateCry; break;
     case 10: targetFace = stateDizzy; break;
     case 11: targetFace = stateNormal; break; // Nháy mắt như khuôn mặt 1 (Normal)
-    case 12: break; // LookAround -> KHÔNG gán targetFace, giữ nguyên biểu cảm miệng hiện tại
+    case 12: targetFace = stateNormal; break; // LookAround -> Ép về mặt Normal để tránh bị kẹt mặt cũ (ví dụ mặt 21)
     case 13: targetFace = statePanic; break;
     case 14: targetFace = stateSmug; break;
     case 15: targetFace = stateScan; break;
