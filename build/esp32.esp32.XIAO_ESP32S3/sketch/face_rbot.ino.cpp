@@ -84,6 +84,7 @@ const FaceState stateLove      = {0, 55, 55, 25,  0, 4, 14, 25, 40, 2, 4,   0,  
 const FaceState stateGlitch    = {4, 40, 40, 10,  0, 4, 14, 10, 30, 2, 4,   0,   0}; // Mắt vuông, giật lag loạn xạ
 const FaceState stateSus       = {0, 40, 35, 17,  0, 4, 14,  5, 20, 2, 4,   0,   0}; // Hình thái cơ bản, sẽ bị override nháy 1 mắt
 const FaceState stateFurious   = {2, 45, 25, 10, 25, 4, 14,  5, 45, 2, 4,   0,  15}; // Rất tức giận, ngước mặt, mồm há to
+const FaceState statePetting   = {1, 45,  8, 20, 15, 4, 14, 15, 30, 2, 4,   0, -10}; // Mắt nhắm tít vui vẻ (chiều cao=8, góc=15), mồm tủm tỉm, ngước đầu hưởng thụ
 
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle;
@@ -105,7 +106,7 @@ enum SoundState { QUIET = 0, NOISY = 1 };
 enum TouchState { UNTOUCHED = 0, TOUCHED = 1 };
 
 const int NUM_STATES = 3 * 2 * 2; // 12 Trạng thái
-const int NUM_ACTIONS = 21; // 21 Biểu cảm (Idle, Normal, Happy, Sad, Talk, Sleep, Angry, Surprised, Doubt, Cry, Dizzy, Wink, LookAround, Panic, Smug, Scan, Bored, Love, Glitch, Sus, Furious)
+const int NUM_ACTIONS = 22; // 22 Biểu cảm (Thêm 21: Petting)
 
 // 2. Q-Table (Bộ nhớ Kinh nghiệm)
 float qTable[NUM_STATES][NUM_ACTIONS] = {0.0}; 
@@ -121,27 +122,27 @@ int currentSound = QUIET;
 int currentTouch = UNTOUCHED;
 
 // Hàm chuyển đổi tổ hợp cảm biến thành 1 mã trạng thái (0-11)
-#line 122 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 123 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch);
-#line 127 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 128 "C:\\rust\\face_rbot\\face_rbot.ino"
 void readMockSensors();
-#line 135 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 136 "C:\\rust\\face_rbot\\face_rbot.ino"
 float calculateReward(int state, int action);
-#line 165 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 166 "C:\\rust\\face_rbot\\face_rbot.ino"
 void learn(int state, int action, float reward, int nextState);
-#line 182 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 183 "C:\\rust\\face_rbot\\face_rbot.ino"
 void AITask(void *pvParameters);
-#line 226 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 227 "C:\\rust\\face_rbot\\face_rbot.ino"
 void updateFaceLogic();
-#line 316 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 317 "C:\\rust\\face_rbot\\face_rbot.ino"
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
-#line 509 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 510 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 844 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 855 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 876 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 887 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
-#line 122 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 123 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
   return temp * 4 + sound * 2 + touch;
 }
@@ -209,7 +210,7 @@ void AITask(void *pvParameters) {
   Serial.println("0:Idle 1:Normal 2:Happy 3:Sad 4:Talk 5:Sleep");
   Serial.println("6:Angry 7:Surprised 8:Doubt 9:Cry 10:Dizzy");
   Serial.println("11:Wink 12:LookAround 13:Panic 14:Smug");
-  Serial.println("15:Scan 16:Bored 17:Love 18:Glitch 19:Sus 20:Furious");
+  Serial.println("15:Scan 16:Bored 17:Love 18:Glitch 19:Sus 20:Furious 21:Petting");
   Serial.println("=========================================");
 
   for (;;) {
@@ -634,6 +635,16 @@ void renderToScreen() {
     effY += sin(millis() / 400.0f) * 5.0f; // Bồng bềnh
   }
 
+  // Petting (21): Vuốt ve, đầu xoay nhẹ rung rinh mãn nguyện
+  if (targetEmotionCode == 21) {
+    effX += sin(millis() / 200.0f) * 3.0f; // Lắc lư nhẹ
+    effY += cos(millis() / 250.0f) * 2.0f; // Nhấp nhô hưởng thụ
+    
+    // Thêm chút rung động giống như con mèo đang kêu gừ gừ
+    effX += random(-1, 2) * 0.5f;
+    effY += random(-1, 2) * 0.5f;
+  }
+
   // Glitch (18): Lag giật cục
   if (targetEmotionCode == 18) {
     if (random(10) > 7) {
@@ -907,10 +918,10 @@ void loop() {
     if (!isBeingPetted) {
       isBeingPetted = true;
       savedEmotionCode = targetEmotionCode; // Lưu lại trạng thái cũ trước khi bị vuốt ve
-      targetEmotionCode = 17; // 17 là trạng thái Love (Mắt to tròn long lanh, miệng cười tươi, đầu bồng bềnh)
+      targetEmotionCode = 21; // 21 là trạng thái Petting
       Serial.print(">> [TOUCH] Phat hien vuot ve! (Touch = ");
       Serial.print(touchValue);
-      Serial.println(") -> Chuyen sang trang thai 17 (Love)");
+      Serial.println(") -> Chuyen sang trang thai 21 (Petting)");
     }
     lastTouchTime = millis(); // Liên tục cập nhật thời gian chừng nào còn giữ tay
   } else {
@@ -981,6 +992,7 @@ void loop() {
     case 18: targetFace = stateGlitch; break;
     case 19: targetFace = stateSus; break;
     case 20: targetFace = stateFurious; break;
+    case 21: targetFace = statePetting; break;
     default: targetFace = stateIdle; break;
   }
 
