@@ -128,11 +128,11 @@ void updateFaceLogic();
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
 #line 336 "C:\\rust\\face_rbot\\face_rbot.ino"
 void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth);
-#line 462 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 469 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 599 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 606 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 631 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 638 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 113 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -392,7 +392,14 @@ void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, f
   if (rTL_x > w/2) rTL_x = w/2; if (rTR_x > w/2) rTR_x = w/2;
   if (rBL_x > w/2) rBL_x = w/2; if (rBR_x > w/2) rBR_x = w/2;
   if (rTL_y > h/2) rTL_y = h/2; if (rTR_y > h/2) rTR_y = h/2;
-  if (rBL_y > h) rBL_y = h; if (rBR_y > h) rBR_y = h; 
+
+  if (!isMouth) {
+    // Với Mắt: Giới hạn bán kính góc dưới là h/2 để đối xứng với góc trên, tránh hiện tượng đè nét khi nháy mắt (h nhỏ)
+    if (rBL_y > h/2) rBL_y = h/2; if (rBR_y > h/2) rBR_y = h/2; 
+  } else {
+    // Với Miệng: Cho phép bán kính góc dưới lấn hết toàn bộ chiều cao (h) để tạo thành hình U (bán nguyệt đáy)
+    if (rBL_y > h) rBL_y = h; if (rBR_y > h) rBR_y = h; 
+  }
 
   int startX = cx - w/2;
   int startY = cy - h/2;
