@@ -74,7 +74,7 @@ const FaceState stateAngry     = {0, 40, 25, 10, 25, 4, 14,  5, 40, 2, 4,   0,  
 const FaceState stateSurprised = {0, 50, 60, 25,  0, 4, 14, 40, 25, 2, 4,   0, -15}; // Mắt mở to tròn, miệng chữ O dài, đầu giật lên
 const FaceState stateDoubt     = {0, 35, 15,  5,  0, 4, 14,  4, 15, 2, 4,  25,   5}; // Mắt híp (squint), liếc sang một bên nghi ngờ
 const FaceState stateCry       = {0, 35, 20, 10,-15, 4, 14, 7, 20, 2, 4,   0,  10}; // Mắt nheo xuống, mếu máo
-const FaceState stateDizzy     = {0, 40, 50, 20,  0, 4, 14, 20, 20, 2, 4,   0,   0}; // Hình dáng bình thường nhưng sẽ quay vòng vòng
+const FaceState stateDizzy     = {0, 50, 50, 20,  0, 4, 14, 20, 20, 2, 4,   0,   0}; // Hình dáng bình thường nhưng sẽ quay vòng vòng
 const FaceState stateWink      = {0, 40, 50, 20,  7, 4, 14, 15, 40, 2, 4,   0,   0}; // Một mắt nhắm một mắt mở (xử lý logic riêng)
 const FaceState statePanic     = {0, 65, 65, 32,  0, 4, 14,  5, 15, 2, 4,   0,   0}; // Mắt mở to tròn hết cỡ, miệng chữ O nhỏ
 const FaceState stateSmug      = {1, 40, 20, 15, 10, 4, 14,  5, 25, 2, 4,  10, -5}; // Bán nguyệt trên, liếc ngước, miệng nhếch lệch
@@ -137,9 +137,9 @@ void updateFaceLogic();
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
 #line 505 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 768 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 805 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 800 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 837 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 122 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -536,6 +536,43 @@ void renderToScreen() {
   float rightBlink = -1.0f;
   float leftEyeScale = 1.0f; 
   float rightEyeScale = 1.0f;
+
+  // --- BỔ SUNG ANIMATION ĐỘNG CHO CÁC TRẠNG THÁI TĨNH ---
+  // 2 (Happy): Cười hớn hở nảy lên nảy xuống
+  if (targetEmotionCode == 2) {
+    effY += sin(millis() / 150.0f) * 6.0f;
+  }
+  
+  // 3 (Sad): Thở dài chậm chạp, cúi gằm mặt
+  if (targetEmotionCode == 3) {
+    effY += sin(millis() / 600.0f) * 3.0f;
+  }
+
+  // 6 (Angry): Thở dốc, phập phồng và rung nhẹ vì tức giận
+  if (targetEmotionCode == 6) {
+    effX += random(-1, 2); 
+    effY += sin(millis() / 100.0f) * 2.5f;
+  }
+
+  // 7 (Surprised): Bàng hoàng, nhịp tim đập nhanh nhấp nhô
+  if (targetEmotionCode == 7) {
+    effY += sin(millis() / 100.0f) * 3.0f; 
+  }
+
+  // 9 (Cry): Khóc run người, thỉnh thoảng nấc cụt
+  if (targetEmotionCode == 9) {
+    effY += sin(millis() / 300.0f) * 2.0f; // Run nhẹ
+    if (millis() % 1500 < 150) { // Mỗi 1.5s nấc một cái (kéo giật mắt lên trên)
+      effY -= 8.0f;
+    }
+  }
+
+  // 14 (Smug): Đắc ý lắc lư cái đầu qua lại (Hình oval dẹt)
+  // Lưu ý: Smug (14) đã có lerp mouthAngle, phần này chỉ thêm lắc lư đầu
+  if (targetEmotionCode == 14) {
+    effX += sin(millis() / 250.0f) * 5.0f; 
+    effY += cos(millis() / 250.0f) * 2.0f;
+  }
 
   // Hiệu ứng Chóng mặt (Dizzy - Code 10): Xoay vòng vòng
   if (targetEmotionCode == 10) { 
