@@ -429,11 +429,11 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
   uint32_t colorBot    = 0x00D200; // (0, 210, 0)
   uint32_t shadowColor = 0x00C800; // (0, 200, 0)
 
-  if (targetEmotionCode == 20) { // Furious -> Đỏ rực (Dùng mã BGR: 0x0000FF thay vì 0xFF0000 để chống lỗi ngược màu)
-    colorTop    = 0x0000FF; // Đỏ tươi
-    colorMid    = 0x0000DD;
-    colorBot    = 0x0000BB;
-    shadowColor = 0x000088;
+  if (targetEmotionCode == 20) { // Furious -> Lửa giận (Cam sáng -> Đỏ rực) để cực kỳ nổi bật trên nền đen
+    colorTop    = 0xFF8800; // Cam sáng (Yellow-Orange)
+    colorMid    = 0xFF4400; // Cam đỏ (Orange-Red)
+    colorBot    = 0xDD0000; // Đỏ (Red)
+    shadowColor = 0x880000; // Đỏ sậm
   } else if (targetEmotionCode == 18 && random(10) > 8) { // Glitch -> Nhiễu màu ngẫu nhiên
     colorTop = random(0xFFFFFF);
     colorBot = random(0xFFFFFF);
@@ -536,10 +536,10 @@ void renderToScreen() {
     }
   }
 
-  // Sus (19): Ánh mắt phán xét (Nghiêng đầu, liếc xéo, híp một mắt)
+  // Sus (19): Ánh mắt phán xét (Nghiêng đầu, liếc xéo, một mắt to một mắt nhỏ)
   if (targetEmotionCode == 19) {
-    rightBlink = 0.4f;      // Híp mắt phải
-    leftEyeScale = 1.1f;    // Trợn nhẹ mắt trái
+    rightEyeScale = 0.5f;   // Thu nhỏ toàn bộ mắt phải (nhướng mày nhíu mắt)
+    leftEyeScale = 1.2f;    // Mở to mắt trái
     effX += 20.0f;          // Liếc xéo sang một bên
     effY -= 10.0f;          // Đầu hơi ngước lên tự cao
   }
@@ -703,11 +703,11 @@ void renderToScreen() {
     uint32_t colorBot    = 0x00D200;
     uint32_t shadowColor = 0x00C800;
 
-    if (targetEmotionCode == 20) { // Furious -> Đỏ (BGR format)
-      colorTop    = 0x0000FF;
-      colorMid    = 0x0000DD;
-      colorBot    = 0x0000BB;
-      shadowColor = 0x000088;
+    if (targetEmotionCode == 20) { // Furious -> Lửa giận
+      colorTop    = 0xFF8800;
+      colorMid    = 0xFF4400;
+      colorBot    = 0xDD0000;
+      shadowColor = 0x880000;
     } else if (targetEmotionCode == 18 && random(10) > 8) {
       colorTop = random(0xFFFFFF);
       colorBot = random(0xFFFFFF);

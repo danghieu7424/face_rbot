@@ -137,9 +137,9 @@ void updateFaceLogic();
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
 #line 499 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 751 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 753 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 783 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 785 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 122 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -452,11 +452,11 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
   uint32_t colorBot    = 0x00D200; // (0, 210, 0)
   uint32_t shadowColor = 0x00C800; // (0, 200, 0)
 
-  if (targetEmotionCode == 20) { // Furious -> Đỏ rực
-    colorTop    = 0xFF0000;
-    colorMid    = 0xDD0000;
-    colorBot    = 0xBB0000;
-    shadowColor = 0x880000;
+  if (targetEmotionCode == 20) { // Furious -> Đỏ rực (Dùng mã BGR: 0x0000FF thay vì 0xFF0000 để chống lỗi ngược màu)
+    colorTop    = 0x0000FF; // Đỏ tươi
+    colorMid    = 0x0000DD;
+    colorBot    = 0x0000BB;
+    shadowColor = 0x000088;
   } else if (targetEmotionCode == 18 && random(10) > 8) { // Glitch -> Nhiễu màu ngẫu nhiên
     colorTop = random(0xFFFFFF);
     colorBot = random(0xFFFFFF);
@@ -559,10 +559,12 @@ void renderToScreen() {
     }
   }
 
-  // Sus (19): Nháy híp 1 mắt
+  // Sus (19): Ánh mắt phán xét (Nghiêng đầu, liếc xéo, híp một mắt)
   if (targetEmotionCode == 19) {
-    rightBlink = 0.3f; // Híp mắt phải
-    effY += 5.0f;
+    rightBlink = 0.4f;      // Híp mắt phải
+    leftEyeScale = 1.1f;    // Trợn nhẹ mắt trái
+    effX += 20.0f;          // Liếc xéo sang một bên
+    effY -= 10.0f;          // Đầu hơi ngước lên tự cao
   }
 
   // Furious (20): Rung nhẹ (sôi máu)
@@ -724,11 +726,11 @@ void renderToScreen() {
     uint32_t colorBot    = 0x00D200;
     uint32_t shadowColor = 0x00C800;
 
-    if (targetEmotionCode == 20) {
-      colorTop    = 0xFF0000;
-      colorMid    = 0xDD0000;
-      colorBot    = 0xBB0000;
-      shadowColor = 0x880000;
+    if (targetEmotionCode == 20) { // Furious -> Đỏ (BGR format)
+      colorTop    = 0x0000FF;
+      colorMid    = 0x0000DD;
+      colorBot    = 0x0000BB;
+      shadowColor = 0x000088;
     } else if (targetEmotionCode == 18 && random(10) > 8) {
       colorTop = random(0xFFFFFF);
       colorBot = random(0xFFFFFF);
