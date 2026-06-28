@@ -138,9 +138,9 @@ void updateFaceLogic();
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
 #line 510 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 876 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 884 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 908 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 916 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 123 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -600,13 +600,21 @@ void renderToScreen() {
     effY += sin(millis() / 100.0f) * 3.0f; 
   }
 
-  // 9 (Cry): Khóc run người, thỉnh thoảng nấc cụt
+  // 9 (Cry): Khóc run người, thỉnh thoảng nấc cụt (đôi khi nấc đúp 2 cái)
   if (targetEmotionCode == 9) {
     effY += sin(millis() / 300.0f) * 2.0f; // Run nhẹ
-    // Giảm tần suất nấc xuống mỗi 2.5s một lần (chậm hơn)
-    if (millis() % 2500 < 250) { 
-      // Dùng sóng sin mượt mà tạo hình vòng cung nấc lên rồi thả xuống (thay vì giật cục trừ 8.0)
-      float hiccupPhase = (millis() % 2500) / 250.0f; 
+    
+    unsigned long cycle = millis() % 2500;
+    unsigned long cycleIndex = millis() / 2500;
+    
+    // Nhịp nấc thứ nhất (luôn xảy ra)
+    if (cycle < 250) { 
+      float hiccupPhase = cycle / 250.0f; 
+      effY -= sin(hiccupPhase * PI) * 8.0f;
+    }
+    // Nhịp nấc thứ hai (xảy ra thi thoảng - cứ 3 chu kỳ thì bị 1 lần nấc đúp)
+    else if (cycleIndex % 3 == 0 && cycle > 350 && cycle < 600) {
+      float hiccupPhase = (cycle - 350) / 250.0f; 
       effY -= sin(hiccupPhase * PI) * 8.0f;
     }
   }
