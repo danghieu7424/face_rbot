@@ -82,7 +82,7 @@ const FaceState stateLove      = {0, 55, 55, 25,  0, 4, 14, 25, 40, 2, 4,   0,  
 const FaceState stateGlitch    = {4, 40, 40, 10,  0, 4, 14, 10, 30, 2, 4,   0,   0}; // Mắt vuông, giật lag loạn xạ
 const FaceState stateSus       = {0, 40, 35, 17,  0, 4, 14,  5, 20, 2, 4,   0,   0}; // Hình thái cơ bản, sẽ bị override nháy 1 mắt
 const FaceState stateFurious   = {2, 45, 25, 10, 25, 4, 14,  5, 45, 2, 4,   0,  15}; // Rất tức giận, ngước mặt, mồm há to
-const FaceState statePetting   = {1, 45,  8, 20,  5, 4, 14, 15, 30, 2, 4,   0, -10}; // Mắt nhắm tít vui vẻ (chiều cao=8, góc=5 hơi nghiêng nhẹ), mồm tủm tỉm, ngước đầu hưởng thụ
+const FaceState statePetting   = {1, 45,  8, 20,  10, 4, 14, 15, 30, 2, 4,   0, -10}; // Mắt nhắm tít vui vẻ (chiều cao=8, góc=5 hơi nghiêng nhẹ), mồm tủm tỉm, ngước đầu hưởng thụ
 
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle;
