@@ -131,15 +131,15 @@ float calculateReward(int state, int action);
 void learn(int state, int action, float reward, int nextState);
 #line 182 "C:\\rust\\face_rbot\\face_rbot.ino"
 void AITask(void *pvParameters);
-#line 239 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 248 "C:\\rust\\face_rbot\\face_rbot.ino"
 void updateFaceLogic();
-#line 329 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 338 "C:\\rust\\face_rbot\\face_rbot.ino"
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
-#line 522 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 531 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 857 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 866 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 889 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 898 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 122 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -229,6 +229,15 @@ void AITask(void *pvParameters) {
 
     // 2. Kiểm tra Cảm biến chạm (Touch Sensor)
     int touchValue = touchRead(TOUCH_PIN);
+    
+    // In giá trị ra màn hình mỗi 1 giây để User tự canh ngưỡng (Calibrate)
+    static unsigned long lastDebugTime = 0;
+    if (millis() - lastDebugTime > 1000) {
+      Serial.print("[DEBUG] Gia tri Touch: ");
+      Serial.println(touchValue);
+      lastDebugTime = millis();
+    }
+
     if (touchValue > touchThreshold) {
       // Chống dội (Debounce) 500ms để 1 lần chạm không nhảy liên tục nhiều state
       if (millis() - lastTouchTime > 500) { 

@@ -175,7 +175,7 @@ void learn(int state, int action, float reward, int nextState) {
 
 // --- CẢM BIẾN CHẠM ---
 const int TOUCH_PIN = 2; 
-int touchThreshold = 30000; 
+int touchThreshold = 50000; // Đã tinh chỉnh ngưỡng (16484 -> 95730)
 unsigned long lastTouchTime = 0;
 
 // Task chạy trên Core 0 (Độc lập với Vẽ đồ họa)
@@ -204,30 +204,8 @@ void AITask(void *pvParameters) {
       }
     }
 
-    // 2. Kiểm tra Cảm biến chạm (Touch Sensor)
-    int touchValue = touchRead(TOUCH_PIN);
-    
-    // In giá trị ra màn hình mỗi 1 giây để User tự canh ngưỡng (Calibrate)
-    static unsigned long lastDebugTime = 0;
-    if (millis() - lastDebugTime > 1000) {
-      Serial.print("[DEBUG] Gia tri Touch: ");
-      Serial.println(touchValue);
-      lastDebugTime = millis();
-    }
-
-    if (touchValue > touchThreshold) {
-      // Chống dội (Debounce) 500ms để 1 lần chạm không nhảy liên tục nhiều state
-      if (millis() - lastTouchTime > 500) { 
-        targetEmotionCode = (targetEmotionCode + 1) % NUM_ACTIONS;
-        Serial.print(">> [TOUCH] Phat hien cham! Gia tri: ");
-        Serial.print(touchValue);
-        Serial.print(" -> Chuyen sang trang thai: ");
-        Serial.println(targetEmotionCode);
-        lastTouchTime = millis();
-      }
-    }
-
-    vTaskDelay(pdMS_TO_TICKS(100)); // Quét Serial & Touch mỗi 100ms
+    // Quét Serial mỗi 100ms
+    vTaskDelay(pdMS_TO_TICKS(100)); 
   }
 }
 // ==========================================
@@ -896,7 +874,21 @@ void setup() {
 }
 
 void loop() {
-  // Nhận biết sự thay đổi cảm xúc từ AI Task
+  // 1. Kiểm tra Cảm biến chạm (Touch Sensor) trên Core 1
+  int touchValue = touchRead(TOUCH_PIN);
+  if (touchValue > touchThreshold) {
+    // Chống dội (Debounce) 500ms để 1 lần chạm không nhảy liên tục
+    if (millis() - lastTouchTime > 500) { 
+      targetEmotionCode = (targetEmotionCode + 1) % NUM_ACTIONS;
+      Serial.print(">> [TOUCH] Phat hien cham! Gia tri: ");
+      Serial.print(touchValue);
+      Serial.print(" -> Chuyen sang trang thai: ");
+      Serial.println(targetEmotionCode);
+      lastTouchTime = millis();
+    }
+  }
+
+  // 2. Nhận biết sự thay đổi cảm xúc từ AI Task
   if (targetEmotionCode != lastEmotionCode) {
     if (targetEmotionCode == 11) {
       winkStartTime = millis(); // Reset đồng hồ đo Wink
