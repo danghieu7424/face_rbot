@@ -462,12 +462,47 @@ void renderToScreen() {
     effY += cos(millis() / 150.0f) * 8.0f;
   }
   
-  // Nhìn xung quanh (LookAround - Code 12)
+  // Nhìn xung quanh (LookAround - Code 12) mượt mà độc lập với miệng
+  static float lookAroundOffset = 0.0f;
   if (targetEmotionCode == 12) {
-    if ((millis() / 2000) % 2 == 0) effX -= 30.0f; // Liếc trái
-    else effX += 30.0f; // Liếc phải
+    float targetLook = ((millis() / 2000) % 2 == 0) ? -30.0f : 30.0f;
+    lookAroundOffset += (targetLook - lookAroundOffset) * 0.1f; // Nội suy mượt mà
+  } else {
+    lookAroundOffset += (0.0f - lookAroundOffset) * 0.1f; // Trả về giữa
   }
+  effX += lookAroundOffset;
 
+  // Hiệu ứng Nháy mắt (Wink - Code 11): Liếc mắt trái -> nháy mắt phải -> trả về
+  static float winkOffset = 0.0f;
+  float leftBlink = -1.0f;
+  float rightBlink = -1.0f;
+
+  if (targetEmotionCode == 11) {
+    long elapsed = millis() - winkStartTime;
+    // Giai đoạn 1: Liếc sang trái
+    if (elapsed <= 400) {
+      winkOffset += (-40.0f - winkOffset) * 0.15f; 
+    } else if (elapsed > 400 && elapsed <= 1000) {
+      winkOffset = -40.0f; 
+    } else {
+      winkOffset += (0.0f - winkOffset) * 0.15f; // Trôi về
+    }
+    
+    // Giai đoạn 2: Nháy MẮT PHẢI
+    if (elapsed > 400 && elapsed <= 550) {
+      rightBlink = 1.0f - ((elapsed - 400) / 150.0f); // Mắt phải đóng
+    } else if (elapsed > 550 && elapsed <= 700) {
+      rightBlink = ((elapsed - 550) / 150.0f); // Mắt phải mở
+    } else if (elapsed > 700 && elapsed <= 1000) {
+      rightBlink = 1.0f; // Nháy xong, chờ hết liếc
+    }
+    if (rightBlink >= 0.0f && rightBlink < 0.05f) rightBlink = 0.05f; 
+  } else {
+    winkOffset += (0.0f - winkOffset) * 0.15f;
+  }
+  effX += winkOffset;
+
+  // Tọa độ mắt sau khi cộng các offset độc lập
   float eyeLx = 60 + effX;
   float eyeRx = 180 + effX;
   float eyeY  = 90 + effY;
@@ -476,51 +511,14 @@ void renderToScreen() {
   float leftEyeScale = 1.0f + (effX * 0.002f); 
   float rightEyeScale = 1.0f - (effX * 0.002f);
 
-  float leftBlink = -1.0f;
-  float rightBlink = -1.0f;
-
-  // Hiệu ứng Ngủ (Sleep - Code 5): Nháy mắt 2 lần trước khi nhắm hẳn
+  // Hiệu ứng Ngủ (Sleep - Code 5): Nháy mắt 1 lần nhanh, chờ 1 chút rồi mới nhắm hẳn
   if (targetEmotionCode == 5) {
     long elapsed = millis() - sleepStartTime;
-    // Nháy lần 1: 0 -> 300ms
     if (elapsed < 150) { leftBlink = rightBlink = 1.0f - (elapsed / 150.0f); }
     else if (elapsed < 300) { leftBlink = rightBlink = (elapsed - 150) / 150.0f; }
-    // Nháy lần 2: 300 -> 600ms
-    else if (elapsed < 450) { leftBlink = rightBlink = 1.0f - ((elapsed - 300) / 150.0f); }
-    else if (elapsed < 600) { leftBlink = rightBlink = (elapsed - 450) / 150.0f; }
-    
-    // Từ 600ms trở đi, updateFaceLogic sẽ tự lo phần nhắm tịt. Guardrail tránh dẹp lép.
-    if (elapsed < 600 && leftBlink < 0.05f && leftBlink >= 0.0f) { leftBlink = rightBlink = 0.05f; }
-  }
-
-  // Hiệu ứng Nháy mắt (Wink - Code 11): Liếc mắt sang trái rồi nháy mắt phải, sau đó trôi về
-  if (targetEmotionCode == 11) {
-    long elapsed = millis() - winkStartTime;
-    
-    // Giai đoạn 1 (0 -> 400ms): Liếc mắt sang trái (Giảm effX)
-    if (elapsed <= 400) {
-      effX -= ((float)elapsed / 400.0f) * 40.0f; // Liếc qua trái 40px
-    } else if (elapsed > 400 && elapsed <= 1000) {
-      effX -= 40.0f; // Giữ nguyên vị trí liếc trái
-    }
-    // Giai đoạn > 1000ms: effX tự động không bị trừ nữa, mắt trở về giữa
-    
-    // Tính lại tọa độ mắt Lx, Rx vì effX vừa bị thay đổi
-    eyeLx = 60 + effX;
-    eyeRx = 180 + effX;
-    leftEyeScale = 1.0f + (effX * 0.002f); 
-    rightEyeScale = 1.0f - (effX * 0.002f);
-    
-    // Giai đoạn 2 (400 -> 700ms): Nháy MẮT PHẢI (rightBlink)
-    if (elapsed > 400 && elapsed <= 550) {
-      rightBlink = 1.0f - ((elapsed - 400) / 150.0f); // Mắt phải đóng
-    } else if (elapsed > 550 && elapsed <= 700) {
-      rightBlink = ((elapsed - 550) / 150.0f); // Mắt phải mở
-    } else if (elapsed > 700 && elapsed <= 1000) {
-      rightBlink = 1.0f; // Nháy xong, chờ hết liếc
-    }
-    
-    if (rightBlink >= 0.0f && rightBlink < 0.05f) rightBlink = 0.05f; 
+    // Từ 300ms -> 1000ms: Để mắt mở bình thường (chờ một chút)
+    else if (elapsed < 1000) { leftBlink = rightBlink = 1.0f; }
+    // Sau 1000ms, loop() sẽ gán targetFace = stateSleep, và updateFaceLogic() tự động làm mắt khép lại mượt mà.
   }
   
   drawEye(eyeLx, eyeY, false, leftEyeScale, 0.0f, leftBlink); 
@@ -646,14 +644,21 @@ void loop() {
     case 2: targetFace = stateHappy; break;
     case 3: targetFace = stateSad; break;
     case 4: targetFace = stateTalk; break;
-    case 5: targetFace = stateSleep; break;
+    case 5: 
+      // Đợi 1000ms (lúc mắt đang nháy và chờ) rồi mới gán stateSleep để mắt từ từ nhắm xuống
+      if (millis() - sleepStartTime > 1000) {
+        targetFace = stateSleep; 
+      } else {
+        targetFace = stateNormal; 
+      }
+      break;
     case 6: targetFace = stateAngry; break;
     case 7: targetFace = stateSurprised; break;
     case 8: targetFace = stateDoubt; break;
     case 9: targetFace = stateCry; break;
     case 10: targetFace = stateDizzy; break;
-    case 11: targetFace = stateNormal; break; // Wink -> dùng nền Normal
-    case 12: targetFace = stateNormal; break; // LookAround -> dùng nền Normal
+    case 11: break; // Wink -> KHÔNG gán targetFace, giữ nguyên biểu cảm miệng hiện tại
+    case 12: break; // LookAround -> KHÔNG gán targetFace, giữ nguyên biểu cảm miệng hiện tại
     default: targetFace = stateIdle; break;
   }
 
