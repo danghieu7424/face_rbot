@@ -312,7 +312,7 @@ uint32_t lerpColor(uint32_t from, uint32_t to, float t) {
   uint8_t b = b1 + (b2 - b1) * t;
 
   uint16_t c = tft.color565(r, g, b);
-  return (uint32_t)((c >> 8) | (c << 8)); // Đảo byte (Endianness Swap) để chống lại lỗi hiển thị ngược của SPI LCD
+  return c; // Bỏ Đảo byte (Endianness Swap) vì LovyanGFX tự xử lý nội bộ đúng cấu hình
 }
 
 // Thuật toán Scanline Rasterization vẽ bo góc Elip bất đối xứng + Gradient Dọc (VGradient) siêu mượt
@@ -429,11 +429,11 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
   uint32_t colorBot    = 0x00D200; // (0, 210, 0)
   uint32_t shadowColor = 0x00C800; // (0, 200, 0)
 
-  if (targetEmotionCode == 20) { // Furious -> Lửa giận (Cam sáng -> Đỏ rực) để cực kỳ nổi bật trên nền đen
-    colorTop    = 0xFF8800; // Cam sáng (Yellow-Orange)
-    colorMid    = 0xFF4400; // Cam đỏ (Orange-Red)
-    colorBot    = 0xDD0000; // Đỏ (Red)
-    shadowColor = 0x880000; // Đỏ sậm
+  if (targetEmotionCode == 20) { // Furious -> Lửa giận (Dùng chuẩn RGB)
+    colorTop    = 0xFF0000; // Đỏ
+    colorMid    = 0xDD0000; // Đỏ sậm
+    colorBot    = 0xBB0000; // Đỏ tối
+    shadowColor = 0x880000; // Đỏ đậm
   } else if (targetEmotionCode == 18 && random(10) > 8) { // Glitch -> Nhiễu màu ngẫu nhiên
     colorTop = random(0xFFFFFF);
     colorBot = random(0xFFFFFF);
@@ -446,19 +446,16 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
   float shape = currentFace.eyeShapeType;
 
   // 1. Vẽ Bóng Giả (Dark Blue) làm nền
-  // Thu hẹp bề ngang (w - 4) để bóng không bị bè ra 2 bên góc, làm kích thước bóng nhỏ lại
   drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY, w - 4, h, shape, shadowColor, shadowColor, false, pitchFactor);
 
   if (targetEmotionCode == 10) {
-    // 2. Vẽ Hiệu ứng Xoáy Thôi Miên (Hypnotic Spirals)
-    // Lấy màu Gốc từ colorTop, ép kiểu 16-bit và Swap-byte để chữa lỗi Endianness
+    // 2. Vẽ Hiệu ứng Xoáy Thôi Miên
     uint16_t c = tft.color565((colorTop >> 16) & 0xFF, (colorTop >> 8) & 0xFF, colorTop & 0xFF);
-    uint32_t swappedColor = (c >> 8) | (c << 8);
+    uint32_t color = c;
 
     float spin = millis() * 0.3f; // Tốc độ xoay
     for (int r = 5; r < (w / 2) - 2; r += 6) {
-      // Vẽ vòng cung đứt khúc, góc lệch nhau tạo hình xoáy
-      eyeSprite.drawArc(pivotX, pivotY, r, r - 2, spin - r * 15, spin - r * 15 + 180, swappedColor);
+      eyeSprite.drawArc(pivotX, pivotY, r, r - 2, spin - r * 15, spin - r * 15 + 180, color);
     }
   } else if (targetEmotionCode == 15) {
     // 2. GIẢI PHÁP CHUYỂN MÀU PHÂN LỚP
@@ -536,12 +533,16 @@ void renderToScreen() {
     }
   }
 
-  // Sus (19): Ánh mắt phán xét (Nghiêng đầu, liếc xéo, một mắt to một mắt nhỏ)
+  float leftAngle = 0.0f;
+  float rightAngle = 0.0f;
+
+  // Sus (19): Ánh mắt phán xét (Nghiêng đầu, liếc xéo, nhướng mày)
   if (targetEmotionCode == 19) {
-    rightEyeScale = 0.5f;   // Thu nhỏ toàn bộ mắt phải (nhướng mày nhíu mắt)
-    leftEyeScale = 1.2f;    // Mở to mắt trái
-    effX += 20.0f;          // Liếc xéo sang một bên
-    effY -= 10.0f;          // Đầu hơi ngước lên tự cao
+    rightBlink = 0.5f;      // Nửa nhắm mắt phải
+    leftAngle = 15.0f;      // Nhướng mày trái lên (góc quay 15 độ)
+    rightAngle = -15.0f;    // Cụp mày phải xuống (góc quay -15 độ)
+    effX += 20.0f;          // Liếc xéo sang phải
+    effY -= 10.0f;          // Đầu ngước tự cao
   }
 
   // Furious (20): Rung nhẹ (sôi máu)
@@ -640,8 +641,8 @@ void renderToScreen() {
   // Phối cảnh 3D hình thang (Pitch): Ngước lên (effY < 0) thì trên bé lại. Cúi xuống (effY > 0) thì dưới bé lại.
   float eyePitchFactor = -effY * 0.015f; 
 
-  drawEye(eyeLx, eyeY, false, leftEyeScale, 0.0f, leftBlink, eyePitchFactor); 
-  drawEye(eyeRx, eyeY, true, rightEyeScale, 0.0f, rightBlink, eyePitchFactor);
+  drawEye(eyeLx, eyeY, false, leftEyeScale, leftAngle, leftBlink, eyePitchFactor); 
+  drawEye(eyeRx, eyeY, true, rightEyeScale, rightAngle, rightBlink, eyePitchFactor);
 
   // Hiệu ứng Khóc (Cry - Code 9): Rơi nước mắt
   if (targetEmotionCode == 9) { 
@@ -703,10 +704,10 @@ void renderToScreen() {
     uint32_t colorBot    = 0x00D200;
     uint32_t shadowColor = 0x00C800;
 
-    if (targetEmotionCode == 20) { // Furious -> Lửa giận
-      colorTop    = 0xFF8800;
-      colorMid    = 0xFF4400;
-      colorBot    = 0xDD0000;
+    if (targetEmotionCode == 20) { // Furious -> Lửa giận (Dùng chuẩn RGB)
+      colorTop    = 0xFF0000;
+      colorMid    = 0xDD0000;
+      colorBot    = 0xBB0000;
       shadowColor = 0x880000;
     } else if (targetEmotionCode == 18 && random(10) > 8) {
       colorTop = random(0xFFFFFF);
