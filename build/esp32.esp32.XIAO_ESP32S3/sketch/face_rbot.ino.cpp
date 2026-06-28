@@ -137,9 +137,9 @@ void updateFaceLogic();
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
 #line 505 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 805 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 841 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 837 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 873 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 122 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -537,7 +537,43 @@ void renderToScreen() {
   float leftEyeScale = 1.0f; 
   float rightEyeScale = 1.0f;
 
-  // --- BỔ SUNG ANIMATION ĐỘNG CHO CÁC TRẠNG THÁI TĨNH ---
+  // --- BỔ SUNG ANIMATION ĐỘNG CHO TẤT CẢ CÁC TRẠNG THÁI TĨNH CÒN LẠI ---
+  // 0 (Idle) & 1 (Normal): Nhịp thở rất nhẹ nhàng, đều đặn
+  if (targetEmotionCode == 0 || targetEmotionCode == 1) {
+    effY += sin(millis() / 800.0f) * 1.5f;
+  }
+
+  // 4 (Talk): Gật gù, nhún nhảy khi nói chuyện
+  if (targetEmotionCode == 4) {
+    effY += sin(millis() / 150.0f) * 3.5f;
+  }
+
+  // 5 (Sleep): Thở dốc nhịp dài, chậm và sâu (bụng phập phồng)
+  if (targetEmotionCode == 5) {
+    effY += sin(millis() / 1500.0f) * 4.0f;
+    effX += cos(millis() / 1500.0f) * 2.0f; // Đầu hơi nghiêng
+  }
+
+  // 8 (Doubt): Lắc nhẹ đầu sang hai bên, kiểu "không chắc lắm"
+  if (targetEmotionCode == 8) {
+    effX += sin(millis() / 400.0f) * 4.0f;
+  }
+
+  // 11 (Wink): Nhún 1 cái thật nhẹ khi nháy mắt
+  if (targetEmotionCode == 11) {
+    effY += sin(millis() / 200.0f) * 2.0f;
+  }
+
+  // 15 (Scan): Quét ngang nhè nhẹ (như camera an ninh xoay)
+  if (targetEmotionCode == 15) {
+    effX += sin(millis() / 1000.0f) * 12.0f;
+  }
+
+  // 16 (Bored): Gục gặc chán nản
+  if (targetEmotionCode == 16) {
+    effY += sin(millis() / 600.0f) * 2.5f;
+  }
+
   // 2 (Happy): Cười hớn hở nảy lên nảy xuống
   if (targetEmotionCode == 2) {
     effY += sin(millis() / 150.0f) * 6.0f;
@@ -612,7 +648,7 @@ void renderToScreen() {
     rightBlink = blinkFactor * (1.0f - susWeight) + 0.55f * susWeight;
     leftAngle = 5.0f * susWeight;
     rightAngle = -5.0f * susWeight;
-    effX += 15.0f * susWeight;
+    effX += (15.0f + sin(millis() / 600.0f) * 4.0f) * susWeight; // Thêm lắc nhẹ dò xét
     effY -= 5.0f * susWeight;
   }
 
