@@ -138,9 +138,9 @@ void updateFaceLogic();
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
 #line 510 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 855 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 873 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 887 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 905 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 123 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -678,18 +678,36 @@ void renderToScreen() {
   static float lookAroundOffsetY = 0.0f;
   static float targetLookX = 0.0f;
   static float targetLookY = 0.0f;
-  static unsigned long lastLookTime = 0;
+  static unsigned long lookWaitTime = 0;
+  static bool isLookingWaiting = false;
+  static unsigned long currentLookDelay = 1500;
 
   if (targetEmotionCode == 12) {
-    // Nếu quá thời gian, chọn một điểm nhìn mới ngẫu nhiên (từ 0.8s đến 2s)
-    if (millis() - lastLookTime > random(800, 2000)) { 
-      targetLookX = random(-35, 36); // Liếc qua lại trục X
-      targetLookY = random(-20, 21); // Liếc lên xuống trục Y
-      lastLookTime = millis();
+    float diffX = targetLookX - lookAroundOffsetX;
+    float diffY = targetLookY - lookAroundOffsetY;
+
+    // Kiểm tra xem mắt đã trôi đến gần mục tiêu (khoảng cách < 1.0) chưa
+    if (abs(diffX) < 1.0f && abs(diffY) < 1.0f) {
+      if (!isLookingWaiting) {
+        // Vừa mới đến đích, khóa lại và bắt đầu đếm giờ chờ
+        isLookingWaiting = true;
+        lookWaitTime = millis();
+      } else {
+        // Đang ở đích, kiểm tra xem đã chờ đủ 1-2s chưa
+        if (millis() - lookWaitTime > currentLookDelay) {
+          targetLookX = random(-35, 36); // Liếc qua lại trục X
+          targetLookY = random(-20, 21); // Liếc lên xuống trục Y
+          currentLookDelay = random(1000, 2500); // Random chờ 1s - 2.5s cho lần tới
+          isLookingWaiting = false; // Bắt đầu di chuyển
+        }
+      }
+    } else {
+      isLookingWaiting = false;
     }
-    // Tính toán khoảng cách nội suy
-    float stepX = (targetLookX - lookAroundOffsetX) * 0.05f; 
-    float stepY = (targetLookY - lookAroundOffsetY) * 0.05f; 
+
+    // Tính toán khoảng cách nội suy để trôi mượt mà
+    float stepX = diffX * 0.05f; 
+    float stepY = diffY * 0.05f; 
     
     // Giới hạn tốc độ liếc tối đa để mắt trôi đi mượt mà, không bị "giật cái" khi khoảng cách quá xa
     if (stepX > 1.2f) stepX = 1.2f; if (stepX < -1.2f) stepX = -1.2f;
