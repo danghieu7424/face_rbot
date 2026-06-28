@@ -899,6 +899,15 @@ void setup() {
 void loop() {
   // 1. Kiểm tra Cảm biến chạm (Touch Sensor) trên Core 1
   int touchValue = touchRead(TOUCH_PIN);
+  
+  // Debug tạm thời trên Core 1 để xem có nhận được giá trị 95730 không
+  static unsigned long lastDebugTime = 0;
+  if (millis() - lastDebugTime > 1000) {
+    Serial.print("[DEBUG Core1] Gia tri Touch: ");
+    Serial.println(touchValue);
+    lastDebugTime = millis();
+  }
+
   if (touchValue > touchThreshold) {
     // Chống dội (Debounce) 500ms để 1 lần chạm không nhảy liên tục
     if (millis() - lastTouchTime > 500) { 
