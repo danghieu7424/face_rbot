@@ -544,8 +544,6 @@ void renderToScreen() {
 
   float leftAngle = 0.0f;
   float rightAngle = 0.0f;
-  float leftBlink = -1.0f;
-  float rightBlink = -1.0f;
 
   // Sus (19): Ánh mắt phán xét (Nghiêng đầu nhẹ, liếc xéo, nheo cả 2 mắt)
   // Dùng susWeight để Lerp mượt mà mọi thông số, tránh hiện tượng nhảy (Snap)

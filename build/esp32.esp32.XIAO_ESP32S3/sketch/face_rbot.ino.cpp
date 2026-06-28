@@ -131,15 +131,15 @@ float calculateReward(int state, int action);
 void learn(int state, int action, float reward, int nextState);
 #line 177 "C:\\rust\\face_rbot\\face_rbot.ino"
 void AITask(void *pvParameters);
-#line 218 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 222 "C:\\rust\\face_rbot\\face_rbot.ino"
 void updateFaceLogic();
-#line 301 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 312 "C:\\rust\\face_rbot\\face_rbot.ino"
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
-#line 494 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 505 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 753 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 770 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 785 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 802 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 122 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -238,6 +238,10 @@ unsigned long lastBlinkTime = 0;
 unsigned long nextBlinkDelay = 3000;
 int sleepBlinkCount = 0; // Đếm số lần chớp mắt lúc buồn ngủ
 
+// --- OVERRIDE: ANIMATION WEIGHTS ---
+float susWeight = 0.0f;
+float smugWeight = 0.0f;
+
 void updateFaceLogic() {
   // Điều chỉnh tốc độ chuyển trạng thái (Animation Timing Tùy chỉnh)
   float currentLerp = 0.1; // Default
@@ -267,6 +271,13 @@ void updateFaceLogic() {
   currentFace.mouthInnerShadow += (targetFace.mouthInnerShadow - currentFace.mouthInnerShadow) * currentLerp;
   currentFace.offsetX     += (targetFace.offsetX     - currentFace.offsetX)     * currentLerp;
   currentFace.offsetY     += (targetFace.offsetY     - currentFace.offsetY)     * currentLerp;
+
+  // Xử lý Animation Overrides Weights (Lerp mượt mà cho các hiệu ứng phức tạp)
+  float targetSusWeight = (targetEmotionCode == 19) ? 1.0f : 0.0f;
+  susWeight += (targetSusWeight - susWeight) * currentLerp;
+  
+  float targetSmugWeight = (targetEmotionCode == 14) ? 1.0f : 0.0f;
+  smugWeight += (targetSmugWeight - smugWeight) * currentLerp;
 
   // Xử lý Blink Override độc lập (Không làm hỏng State gốc)
   unsigned long now = millis();
@@ -556,15 +567,18 @@ void renderToScreen() {
 
   float leftAngle = 0.0f;
   float rightAngle = 0.0f;
+  float leftBlink = -1.0f;
+  float rightBlink = -1.0f;
 
   // Sus (19): Ánh mắt phán xét (Nghiêng đầu nhẹ, liếc xéo, nheo cả 2 mắt)
-  if (targetEmotionCode == 19) {
-    leftBlink = 0.55f;      // Nheo mắt trái
-    rightBlink = 0.55f;     // Nheo mắt phải
-    leftAngle = 5.0f;       // Nghiêng nhẹ vào trong (tạo nếp nhăn cau mày)
-    rightAngle = -5.0f;     // Nghiêng nhẹ vào trong
-    effX += 15.0f;          // Liếc xéo sang phải nhẹ nhàng
-    effY -= 5.0f;           // Đầu ngước nhẹ
+  // Dùng susWeight để Lerp mượt mà mọi thông số, tránh hiện tượng nhảy (Snap)
+  if (susWeight > 0.01f) {
+    leftBlink = blinkFactor * (1.0f - susWeight) + 0.55f * susWeight;
+    rightBlink = blinkFactor * (1.0f - susWeight) + 0.55f * susWeight;
+    leftAngle = 5.0f * susWeight;
+    rightAngle = -5.0f * susWeight;
+    effX += 15.0f * susWeight;
+    effY -= 5.0f * susWeight;
   }
 
   // Furious (20): Rung nhẹ (sôi máu)
@@ -741,7 +755,10 @@ void renderToScreen() {
 
     // Hiệu ứng Smug (14) & Sus (19): Nhếch mép nghiêng mồm
     float mouthAngle = 0.0f;
-    if (targetEmotionCode == 14 || targetEmotionCode == 19) mouthAngle = 10.0f;
+    float maxWeight = (smugWeight > susWeight) ? smugWeight : susWeight;
+    if (maxWeight > 0.01f) {
+      mouthAngle = 10.0f * maxWeight;
+    }
 
     if (mouthAngle != 0.0f) {
       eyeSprite.fillSprite(TFT_BLACK);
