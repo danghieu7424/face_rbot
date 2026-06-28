@@ -138,9 +138,9 @@ void updateFaceLogic();
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
 #line 510 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 873 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 876 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 905 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 908 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 123 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -603,8 +603,11 @@ void renderToScreen() {
   // 9 (Cry): Khóc run người, thỉnh thoảng nấc cụt
   if (targetEmotionCode == 9) {
     effY += sin(millis() / 300.0f) * 2.0f; // Run nhẹ
-    if (millis() % 1500 < 150) { // Mỗi 1.5s nấc một cái (kéo giật mắt lên trên)
-      effY -= 8.0f;
+    // Giảm tần suất nấc xuống mỗi 2.5s một lần (chậm hơn)
+    if (millis() % 2500 < 250) { 
+      // Dùng sóng sin mượt mà tạo hình vòng cung nấc lên rồi thả xuống (thay vì giật cục trừ 8.0)
+      float hiccupPhase = (millis() % 2500) / 250.0f; 
+      effY -= sin(hiccupPhase * PI) * 8.0f;
     }
   }
 
