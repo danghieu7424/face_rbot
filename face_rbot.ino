@@ -76,8 +76,8 @@ const FaceState stateDizzy     = {0, 40, 50, 20,  0, 4, 14, 20, 20, 2, 4,   0,  
 const FaceState stateWink      = {0, 40, 50, 20,  7, 4, 14, 15, 40, 2, 4,   0,   0}; // Một mắt nhắm một mắt mở (xử lý logic riêng)
 const FaceState statePanic     = {0, 65, 65, 32,  0, 4, 14,  5, 15, 2, 4,   0,   0}; // Mắt mở to tròn hết cỡ, miệng chữ O nhỏ
 const FaceState stateSmug      = {1, 40, 20, 15, 10, 4, 14,  5, 25, 2, 4,  10, -5}; // Bán nguyệt trên, liếc ngước, miệng nhếch lệch
-const FaceState stateScan      = {0, 40, 50, 20,  0, 4, 14,  2, 40, 2, 4,   0,   0}; // Mắt bình thường, bên trong có radar quét
-const FaceState stateBored     = {3, 40, 25, 10,  0, 4, 14,  5, 45, 2, 4,   0,  25}; // Mắt nửa vời, cúi gập gục đầu, miệng ngang dài
+const FaceState stateScan      = {0, 50, 50, 20,  0, 4, 14,  2, 40, 2, 4,   0,   0}; // Mắt bình thường, bên trong có radar quét
+const FaceState stateBored     = {3, 40, 25, 10,  0, 4, 14,  2, 45, 2, 4,   0,  25}; // Mắt nửa vời, cúi gập gục đầu, miệng ngang dài
 
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle;
