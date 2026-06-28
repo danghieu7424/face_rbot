@@ -515,9 +515,9 @@ void renderToScreen() {
   float rightEyeScale = 1.0f;
 
   // --- BỔ SUNG ANIMATION ĐỘNG CHO TẤT CẢ CÁC TRẠNG THÁI TĨNH CÒN LẠI ---
-  // 0 (Idle) & 1 (Normal): Nhịp thở rất nhẹ nhàng, đều đặn
+  // 0 (Idle) & 1 (Normal): Nhịp thở nhẹ nhàng, đều đặn
   if (targetEmotionCode == 0 || targetEmotionCode == 1) {
-    effY += sin(millis() / 800.0f) * 3.0f; // Biên độ tăng lên để dễ thấy nhịp thở
+    effY += sin(millis() / 400.0f) * 3.0f; // Nhịp thở nhanh hơn (400) và biên độ rõ (3.0)
   }
 
   // 4 (Talk): Gật gù, nhún nhảy khi nói chuyện
@@ -763,9 +763,8 @@ void renderToScreen() {
     float h = currentFace.mouthHeight * mouthDepthScale;
     
     // --- OVERRIDE: TALK ANIMATION (Mấp máy môi) ---
-    // Chỉ kích hoạt khi mục tiêu CHÍNH XÁC là trạng thái Nói (chiều cao miệng == 35)
-    // Điều này tránh việc trạng thái Ngạc nhiên (chiều cao 40) bị mấp máy môi sai cách
-    if (abs(targetFace.mouthHeight - 35.0f) < 0.1f) {
+    // Chỉ kích hoạt khi trạng thái hiện tại là Talk (4)
+    if (targetEmotionCode == 4) {
       // Giảm tốc độ nói (chia cho 150.0f thay vì 80.0f) để khớp với nhịp điệu tự nhiên hơn
       float talkPhase = millis() / 150.0f;
       float talkFactor = 0.3f + 0.7f * abs(sin(talkPhase) * sin(talkPhase * 0.6f));
