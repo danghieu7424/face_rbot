@@ -206,6 +206,15 @@ void AITask(void *pvParameters) {
 
     // 2. Kiểm tra Cảm biến chạm (Touch Sensor)
     int touchValue = touchRead(TOUCH_PIN);
+    
+    // In giá trị ra màn hình mỗi 1 giây để User tự canh ngưỡng (Calibrate)
+    static unsigned long lastDebugTime = 0;
+    if (millis() - lastDebugTime > 1000) {
+      Serial.print("[DEBUG] Gia tri Touch: ");
+      Serial.println(touchValue);
+      lastDebugTime = millis();
+    }
+
     if (touchValue > touchThreshold) {
       // Chống dội (Debounce) 500ms để 1 lần chạm không nhảy liên tục nhiều state
       if (millis() - lastTouchTime > 500) { 
