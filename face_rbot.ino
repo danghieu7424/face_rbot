@@ -83,6 +83,7 @@ volatile int targetEmotionCode = 7; // Mặc định là Idle (7)
 int lastEmotionCode = 7; // Dùng trên Core 1 để phát hiện chuyển đổi trạng thái
 unsigned long winkStartTime = 0;
 unsigned long sleepStartTime = 0;
+bool winkDirection = false; // Luân phiên hướng nháy mắt (false=trái, true=phải)
 
 // ==========================================
 // HỆ THỐNG AI: Q-LEARNING & MOCK SENSORS
@@ -190,45 +191,6 @@ void AITask(void *pvParameters) {
         Serial.println("Loi: Ma cam xuc phai tu 0 den 12.");
       }
     }
-
-    // --- ĐÃ COMMENT THUẬT TOÁN Q-LEARNING (Bỏ // để bật lại) ---
-    // readMockSensors();
-    // int nextState = getStateIndex(currentTemp, currentSound, currentTouch);
-    //
-    // // 1. Chọn Hành Động (Epsilon-Greedy)
-    // int chosenAction = 0;
-    // if (random(0, 100) < (explorationRate * 100)) {
-    //   chosenAction = random(0, NUM_ACTIONS); // Khám phá ngẫu nhiên
-    // } else {
-    //   // Khai thác kinh nghiệm tốt nhất
-    //   float maxQ = qTable[currentState][0];
-    //   chosenAction = 0;
-    //   for (int i = 1; i < NUM_ACTIONS; i++) {
-    //     if (qTable[currentState][i] > maxQ) {
-    //       maxQ = qTable[currentState][i];
-    //       chosenAction = i;
-    //     }
-    //   }
-    // }
-    //
-    // // 2. Gửi lệnh cho Khuôn Mặt (Chạy trên Core 1)
-    // targetEmotionCode = chosenAction;
-    //
-    // // 3. Chờ xem phản ứng của môi trường
-    // int delayTime = (chosenAction == 3) ? random(4000, 8000) : random(2000, 4000);
-    // vTaskDelay(pdMS_TO_TICKS(delayTime)); 
-    //
-    // // 4. Nhận lại kết quả và Học
-    // readMockSensors();
-    // int stateAfterAction = getStateIndex(currentTemp, currentSound, currentTouch);
-    // float reward = calculateReward(currentState, chosenAction);
-    // 
-    // learn(currentState, chosenAction, reward, stateAfterAction);
-    // currentState = stateAfterAction;
-    // 
-    // // Giảm dần tỷ lệ khám phá (Trưởng thành theo thời gian)
-    // if (explorationRate > 0.05f) explorationRate -= 0.001f;
-    // -------------------------------------------------------------
 
     vTaskDelay(pdMS_TO_TICKS(100)); // Quét Serial mỗi 100ms
   }
@@ -504,23 +466,32 @@ void renderToScreen() {
 
   if (targetEmotionCode == 11) {
     long elapsed = millis() - winkStartTime;
-    // Giai đoạn 1: Liếc sang trái
+    float targetLook = winkDirection ? 40.0f : -40.0f; // winkDirection=true -> nhìn phải, false -> nhìn trái
+
+    // Giai đoạn 1: Liếc sang một bên
     if (elapsed <= 400) {
-      winkOffset += (-40.0f - winkOffset) * 0.15f; 
+      winkOffset += (targetLook - winkOffset) * 0.15f; 
     } else if (elapsed > 400 && elapsed <= 1000) {
-      winkOffset = -40.0f; 
+      winkOffset = targetLook; 
     } else {
       winkOffset += (0.0f - winkOffset) * 0.15f; // Trôi về
     }
     
-    // Giai đoạn 2: Nháy MẮT PHẢI
+    // Giai đoạn 2: Nháy mắt NGƯỢC LẠI hướng liếc
+    // Nhìn trái (targetLook < 0) -> Nháy MẮT PHẢI (rightBlink)
+    // Nhìn phải (targetLook > 0) -> Nháy MẮT TRÁI (leftBlink)
     if (elapsed > 400 && elapsed <= 550) {
-      rightBlink = 1.0f - ((elapsed - 400) / 150.0f); // Mắt phải đóng
+      if (winkDirection) leftBlink = 1.0f - ((elapsed - 400) / 150.0f);
+      else rightBlink = 1.0f - ((elapsed - 400) / 150.0f);
     } else if (elapsed > 550 && elapsed <= 700) {
-      rightBlink = ((elapsed - 550) / 150.0f); // Mắt phải mở
+      if (winkDirection) leftBlink = ((elapsed - 550) / 150.0f);
+      else rightBlink = ((elapsed - 550) / 150.0f);
     } else if (elapsed > 700 && elapsed <= 1000) {
-      rightBlink = 1.0f; // Nháy xong, chờ hết liếc
+      if (winkDirection) leftBlink = 1.0f;
+      else rightBlink = 1.0f;
     }
+    
+    if (leftBlink >= 0.0f && leftBlink < 0.05f) leftBlink = 0.05f; 
     if (rightBlink >= 0.0f && rightBlink < 0.05f) rightBlink = 0.05f; 
   } else {
     winkOffset += (0.0f - winkOffset) * 0.15f;
@@ -535,9 +506,6 @@ void renderToScreen() {
   // Giả lập chiều sâu 3D (Parallax): Mắt ở hướng nhìn ngược lại sẽ to hơn
   float leftEyeScale = 1.0f + (effX * 0.002f); 
   float rightEyeScale = 1.0f - (effX * 0.002f);
-
-  // Hiệu ứng Ngủ (Sleep - Code 5) đã được trả về cho hệ thống global blinkFactor (mượt mà hơn).
-  // Hệ thống sẽ tự nháy 2 lần, sau 1.5s loop() mới kích hoạt mắt khép xuống dần dần.
 
   drawEye(eyeLx, eyeY, false, leftEyeScale, 0.0f, leftBlink); 
   drawEye(eyeRx, eyeY, true, rightEyeScale, 0.0f, rightBlink);
@@ -565,8 +533,9 @@ void renderToScreen() {
   }
 
   if (currentFace.mouthHeight > 0.5) {
-    float mouthX = 120 + currentFace.offsetX;
-    float mouthY = 125 + currentFace.offsetY;
+    // Miệng đi theo mắt (theo effX, effY) thay vì chỉ offsetX cứng
+    float mouthX = 120 + effX;
+    float mouthY = 125 + effY;
     float w = currentFace.mouthWidth;
     float h = currentFace.mouthHeight;
     
@@ -648,6 +617,7 @@ void loop() {
   if (targetEmotionCode != lastEmotionCode) {
     if (targetEmotionCode == 11) {
       winkStartTime = millis(); // Reset đồng hồ đo Wink
+      winkDirection = !winkDirection; // Đảo hướng nháy mắt luân phiên
     }
     if (targetEmotionCode == 5) {
       sleepStartTime = millis(); // Reset đồng hồ đo Sleep
@@ -680,7 +650,7 @@ void loop() {
     case 8: targetFace = stateDoubt; break;
     case 9: targetFace = stateCry; break;
     case 10: targetFace = stateDizzy; break;
-    case 11: break; // Wink -> KHÔNG gán targetFace, giữ nguyên biểu cảm miệng hiện tại
+    case 11: targetFace = stateNormal; break; // Nháy mắt như khuôn mặt 1 (Normal)
     case 12: break; // LookAround -> KHÔNG gán targetFace, giữ nguyên biểu cảm miệng hiện tại
     default: targetFace = stateIdle; break;
   }
