@@ -77,7 +77,7 @@ const FaceState stateWink      = {0, 40, 50, 20,  7, 4, 14, 15, 40, 2, 4,   0,  
 const FaceState statePanic     = {0, 65, 65, 32,  0, 4, 14,  5, 15, 2, 4,   0,   0}; // Mắt mở to tròn hết cỡ, miệng chữ O nhỏ
 const FaceState stateSmug      = {1, 40, 20, 15, 10, 4, 14,  5, 25, 2, 4,  10, -5}; // Bán nguyệt trên, liếc ngước, miệng nhếch lệch
 const FaceState stateScan      = {0, 40, 50, 20,  0, 4, 14,  2, 40, 2, 4,   0,   0}; // Mắt bình thường, bên trong có radar quét
-const FaceState stateBored     = {3, 40, 25, 10,  0, 4, 14,  5, 20, 2, 4,   0,  25}; // Mắt nửa vời, cúi gập gục đầu
+const FaceState stateBored     = {3, 40, 25, 10,  0, 4, 14,  5, 45, 2, 4,   0,  25}; // Mắt nửa vời, cúi gập gục đầu, miệng ngang dài
 
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle;
@@ -448,15 +448,22 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
     drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 2, w - 2, h - 2, shape, colorMid, colorMid, false, pitchFactor);
     drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 3, w - 4, h - 4, shape, colorTop, colorTop, false, pitchFactor);
 
-    // Vẽ thanh quét (Scanner bar) trượt trái phải bên trong mắt
-    float scanPhase = (sin(millis() / 200.0f) + 1.0f) / 2.0f; // 0.0 -> 1.0
-    float scanX = pivotX - w/2 + 6 + scanPhase * (w - 12); // Trượt trong phạm vi lọt lòng mắt
+    // Vẽ thanh quét (Scanner bar) xoay vòng quanh tâm mắt như Radar thật
+    float scanAngle = (millis() % 2000) / 2000.0f * 2 * PI; // Quay 1 vòng mỗi 2 giây
+    float lineEndX = pivotX + cos(scanAngle) * (w / 2 - 2);
+    float lineEndY = pivotY + sin(scanAngle) * (h / 2 - 2);
     
-    // Quét một đường thẳng đứng màu Cyan sáng
+    // Quét một tia sáng màu Cyan từ tâm ra rìa
     uint32_t radarColor = 0x00FFFF; // Cyan
-    eyeSprite.drawFastVLine((int)scanX - 1, pivotY - h/2 + 4, h - 8, radarColor);
-    eyeSprite.drawFastVLine((int)scanX,     pivotY - h/2 + 4, h - 8, TFT_WHITE);
-    eyeSprite.drawFastVLine((int)scanX + 1, pivotY - h/2 + 4, h - 8, radarColor);
+    eyeSprite.drawLine(pivotX, pivotY, lineEndX, lineEndY, TFT_WHITE);
+    
+    // Tạo hiệu ứng đuôi mờ mờ (trail) phía sau tia quét chính
+    for (int i = 1; i <= 3; i++) {
+      float tailAngle = scanAngle - (i * 0.1f);
+      float tailEndX = pivotX + cos(tailAngle) * (w / 2 - 2);
+      float tailEndY = pivotY + sin(tailAngle) * (h / 2 - 2);
+      eyeSprite.drawLine(pivotX, pivotY, tailEndX, tailEndY, radarColor);
+    }
   } else {
     // 2. GIẢI PHÁP CHUYỂN MÀU PHÂN LỚP (CONCENTRIC LAYERS)
     // Thu hẹp khoảng cách các lớp (w-2, w-4) để viền tối mỏng lại, lõi sáng to ra
@@ -648,13 +655,31 @@ void renderToScreen() {
     // Cả miệng cũng chịu hiệu ứng Trapezoid Pitch như mắt để đồng bộ (cùng nghiêng mặt)
     float mouthPitchFactor = -effY * 0.015f;
 
-    // Truyền topRadiusFactor vào tham số thứ 6 (shapeType) để đảm bảo mọi lớp đồng bộ độ bo góc
-    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, w - 4, h, topRadiusFactor, shadowColor, shadowColor, true, mouthPitchFactor);
-    
-    // Chuyển màu phân lớp cho Miệng (viền mỏng hơn)
-    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 1, w,     h,     topRadiusFactor, colorBot, colorBot, true, mouthPitchFactor);
-    if (h > 2) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 2, w - 2, h - 2, topRadiusFactor, colorMid, colorMid, true, mouthPitchFactor);
-    if (h > 4) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 3, w - 4, h - 4, topRadiusFactor, colorTop, colorTop, true, mouthPitchFactor);
+    // Hiệu ứng Smug (Code 14): Nhếch mép nghiêng mồm
+    float mouthAngle = 0.0f;
+    if (targetEmotionCode == 14) mouthAngle = 10.0f;
+
+    if (mouthAngle != 0.0f) {
+      eyeSprite.fillSprite(TFT_BLACK);
+      float pivotX = 60, pivotY = 60;
+      eyeSprite.setPivot(pivotX, pivotY);
+      
+      drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY, w - 4, h, topRadiusFactor, shadowColor, shadowColor, true, mouthPitchFactor);
+      drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 1, w,     h,     topRadiusFactor, colorBot, colorBot, true, mouthPitchFactor);
+      if (h > 2) drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 2, w - 2, h - 2, topRadiusFactor, colorMid, colorMid, true, mouthPitchFactor);
+      if (h > 4) drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 3, w - 4, h - 4, topRadiusFactor, colorTop, colorTop, true, mouthPitchFactor);
+      
+      canvasSprite.setPivot(mouthX, mouthY);
+      eyeSprite.pushRotated(&canvasSprite, mouthAngle, TFT_BLACK);
+    } else {
+      // Truyền topRadiusFactor vào tham số thứ 6 (shapeType) để đảm bảo mọi lớp đồng bộ độ bo góc
+      drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, w - 4, h, topRadiusFactor, shadowColor, shadowColor, true, mouthPitchFactor);
+      
+      // Chuyển màu phân lớp cho Miệng (viền mỏng hơn)
+      drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 1, w,     h,     topRadiusFactor, colorBot, colorBot, true, mouthPitchFactor);
+      if (h > 2) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 2, w - 2, h - 2, topRadiusFactor, colorMid, colorMid, true, mouthPitchFactor);
+      if (h > 4) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 3, w - 4, h - 4, topRadiusFactor, colorTop, colorTop, true, mouthPitchFactor);
+    }
   }
 
   canvasSprite.pushSprite(0, 0);
