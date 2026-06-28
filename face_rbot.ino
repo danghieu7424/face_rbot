@@ -75,9 +75,9 @@ const FaceState stateCry       = {0, 35, 20, 10,-15, 4, 14, 7, 20, 2, 4,   0,  1
 const FaceState stateDizzy     = {0, 40, 50, 20,  0, 4, 14, 20, 20, 2, 4,   0,   0}; // Hình dáng bình thường nhưng sẽ quay vòng vòng
 const FaceState stateWink      = {0, 40, 50, 20,  7, 4, 14, 15, 40, 2, 4,   0,   0}; // Một mắt nhắm một mắt mở (xử lý logic riêng)
 const FaceState statePanic     = {0, 65, 65, 32,  0, 4, 14,  5, 15, 2, 4,   0,   0}; // Mắt mở to tròn hết cỡ, miệng chữ O nhỏ
-const FaceState stateSmug      = {2, 40, 30, 15,-15, 4, 14,  5, 25, 2, 4,  10,-10}; // Bán nguyệt dưới, liếc ngước, miệng nhếch lệch
-const FaceState stateScan      = {3, 40,  5,  2,  0, 4, 14,  2, 40, 2, 4,   0,   0}; // Mắt viên thuốc dẹt ngang, mồm dẹt mỏng
-const FaceState stateBored     = {3, 40, 15,  7,  0, 4, 14,  5, 20, 2, 4,   0,  25}; // Mắt nửa vời, cúi gập gục đầu
+const FaceState stateSmug      = {1, 40, 20, 15, 10, 4, 14,  5, 25, 2, 4,  10, -5}; // Bán nguyệt trên, liếc ngước, miệng nhếch lệch
+const FaceState stateScan      = {0, 40, 50, 20,  0, 4, 14,  2, 40, 2, 4,   0,   0}; // Mắt bình thường, bên trong có radar quét
+const FaceState stateBored     = {3, 40, 25, 10,  0, 4, 14,  5, 20, 2, 4,   0,  25}; // Mắt nửa vời, cúi gập gục đầu
 
 FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle;
@@ -442,6 +442,21 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
       // Vẽ vòng cung đứt khúc, góc lệch nhau tạo hình xoáy
       eyeSprite.drawArc(pivotX, pivotY, r, r - 2, spin - r * 15, spin - r * 15 + 180, swappedColor);
     }
+  } else if (targetEmotionCode == 15) {
+    // 2. GIẢI PHÁP CHUYỂN MÀU PHÂN LỚP
+    drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 1, w,     h,     shape, colorBot, colorBot, false, pitchFactor);
+    drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 2, w - 2, h - 2, shape, colorMid, colorMid, false, pitchFactor);
+    drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 3, w - 4, h - 4, shape, colorTop, colorTop, false, pitchFactor);
+
+    // Vẽ thanh quét (Scanner bar) trượt trái phải bên trong mắt
+    float scanPhase = (sin(millis() / 200.0f) + 1.0f) / 2.0f; // 0.0 -> 1.0
+    float scanX = pivotX - w/2 + 6 + scanPhase * (w - 12); // Trượt trong phạm vi lọt lòng mắt
+    
+    // Quét một đường thẳng đứng màu Cyan sáng
+    uint32_t radarColor = 0x00FFFF; // Cyan
+    eyeSprite.drawFastVLine((int)scanX - 1, pivotY - h/2 + 4, h - 8, radarColor);
+    eyeSprite.drawFastVLine((int)scanX,     pivotY - h/2 + 4, h - 8, TFT_WHITE);
+    eyeSprite.drawFastVLine((int)scanX + 1, pivotY - h/2 + 4, h - 8, radarColor);
   } else {
     // 2. GIẢI PHÁP CHUYỂN MÀU PHÂN LỚP (CONCENTRIC LAYERS)
     // Thu hẹp khoảng cách các lớp (w-2, w-4) để viền tối mỏng lại, lõi sáng to ra
@@ -473,11 +488,6 @@ void renderToScreen() {
   if (targetEmotionCode == 13) {
     effX += random(-2, 4); 
     effY += random(-2, 4);
-  }
-
-  // Hiệu ứng Quét Radar (Scan - Code 15): Mắt trượt qua lại đều đặn
-  if (targetEmotionCode == 15) {
-    effX += sin(millis() / 300.0f) * 35.0f;
   }
   
   // Nhìn xung quanh (LookAround - Code 12) kiểu nhìn bất định (Random Wandering)
