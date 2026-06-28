@@ -562,18 +562,19 @@ void renderToScreen() {
     float tearW = 8.0f * (1.0f - tearPhase); // Nhỏ dần
     float tearH = 12.0f * (1.0f - tearPhase);
     
+    uint32_t tearColor = 0x00FFFF; // Màu Cyan
+    
     if (tearW > 2) {
-      uint32_t tearColor = 0x00FFFF; // Màu Cyan
       drawGradientAsymmetricRect(&canvasSprite, eyeLx + 10, tearY, tearW, tearH, 2, tearColor, tearColor, false);
-      
-      // Mắt phải rơi lệch nhịp
-      float tearPhaseR = ((millis() + 500) % 1500) / 1500.0f;
-      float tearYR = eyeY + 25 + tearPhaseR * 20.0f;
-      float tearWR = 8.0f * (1.0f - tearPhaseR);
-      float tearHR = 12.0f * (1.0f - tearPhaseR);
-      if (tearWR > 2) {
-        drawGradientAsymmetricRect(&canvasSprite, eyeRx - 10, tearYR, tearWR, tearHR, 2, tearColor, tearColor, false);
-      }
+    }
+    
+    // Mắt phải rơi lệch nhịp (độc lập với mắt trái)
+    float tearPhaseR = ((millis() + 500) % 1500) / 1500.0f;
+    float tearYR = eyeY + 25 + tearPhaseR * 20.0f;
+    float tearWR = 8.0f * (1.0f - tearPhaseR);
+    float tearHR = 12.0f * (1.0f - tearPhaseR);
+    if (tearWR > 2) {
+      drawGradientAsymmetricRect(&canvasSprite, eyeRx - 10, tearYR, tearWR, tearHR, 2, tearColor, tearColor, false);
     }
   }
 

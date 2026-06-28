@@ -81,8 +81,8 @@ FaceState currentFace = stateNormal;
 FaceState targetFace = stateIdle;
 
 // Giao tiếp liên lõi (Inter-core Communication)
-volatile int targetEmotionCode = 7; // Mặc định là Idle (7)
-int lastEmotionCode = 7; // Dùng trên Core 1 để phát hiện chuyển đổi trạng thái
+volatile int targetEmotionCode = 1; // Mặc định là Normal (1)
+int lastEmotionCode = 1; // Dùng trên Core 1 để phát hiện chuyển đổi trạng thái
 unsigned long winkStartTime = 0;
 unsigned long sleepStartTime = 0;
 bool winkDirection = false; // Luân phiên hướng nháy mắt (false=trái, true=phải)
