@@ -249,18 +249,18 @@ float smugWeight = 0.0f;
 
 void updateFaceLogic() {
   // Điều chỉnh tốc độ chuyển trạng thái (Animation Timing Tùy chỉnh)
-  float currentLerp = 0.1; // Default
+  float currentLerp = 0.2; // Tăng default từ 0.1 lên 0.2 để mặt phản ứng lanh lẹ hơn
   if (targetFace.eyeHeight == stateSleep.eyeHeight) {
-    currentLerp = 0.25; // Ngủ: Nhanh hơn bình thường một chút
+    currentLerp = 0.35; // Ngủ: Chuyển trạng thái nhanh hơn nữa
   }
   else if (targetFace.eyeHeight == stateSurprised.eyeHeight) {
     currentLerp = 0.6;  // Ngạc nhiên: Giật bắn mình mở to mắt (Cực nhanh)
   }
   else if (targetFace.eyeAngle == stateAngry.eyeAngle) {
-    currentLerp = 0.4;  // Giận dữ: Quắc mắt dứt khoát
+    currentLerp = 0.5;  // Giận dữ: Quắc mắt dứt khoát
   }
   else if (targetFace.eyeHeight == stateDoubt.eyeHeight) {
-    currentLerp = 0.25; // Nghi ngờ: Nhanh hơn (đã tăng tốc)
+    currentLerp = 0.35; // Nghi ngờ: Nhanh hơn
   }
 
   currentFace.eyeShapeType = targetFace.eyeShapeType; 
@@ -705,22 +705,22 @@ void renderToScreen() {
       isLookingWaiting = false;
     }
 
-    // Tính toán khoảng cách nội suy để trôi mượt mà
-    float stepX = diffX * 0.05f; 
-    float stepY = diffY * 0.05f; 
+    // Tính toán khoảng cách nội suy để trôi mượt mà (tăng hệ số để mắt liếc nhanh dứt khoát)
+    float stepX = diffX * 0.15f; 
+    float stepY = diffY * 0.15f; 
     
-    // Giới hạn tốc độ liếc tối đa để mắt trôi đi mượt mà, không bị "giật cái" khi khoảng cách quá xa
-    if (stepX > 1.2f) stepX = 1.2f; if (stepX < -1.2f) stepX = -1.2f;
-    if (stepY > 1.2f) stepY = 1.2f; if (stepY < -1.2f) stepY = -1.2f;
+    // Giới hạn tốc độ liếc tối đa được nâng lên để ánh mắt lanh lẹ hơn
+    if (stepX > 3.5f) stepX = 3.5f; if (stepX < -3.5f) stepX = -3.5f;
+    if (stepY > 3.5f) stepY = 3.5f; if (stepY < -3.5f) stepY = -3.5f;
     
     lookAroundOffsetX += stepX;
     lookAroundOffsetY += stepY;
   } else {
-    // Khi thoát trạng thái, cũng từ từ trôi về giữa một cách êm ái
-    float stepX = (0.0f - lookAroundOffsetX) * 0.05f;
-    float stepY = (0.0f - lookAroundOffsetY) * 0.05f;
-    if (stepX > 1.2f) stepX = 1.2f; if (stepX < -1.2f) stepX = -1.2f;
-    if (stepY > 1.2f) stepY = 1.2f; if (stepY < -1.2f) stepY = -1.2f;
+    // Khi thoát trạng thái, trôi về giữa nhanh chóng
+    float stepX = (0.0f - lookAroundOffsetX) * 0.15f;
+    float stepY = (0.0f - lookAroundOffsetY) * 0.15f;
+    if (stepX > 3.5f) stepX = 3.5f; if (stepX < -3.5f) stepX = -3.5f;
+    if (stepY > 3.5f) stepY = 3.5f; if (stepY < -3.5f) stepY = -3.5f;
     lookAroundOffsetX += stepX; 
     lookAroundOffsetY += stepY;
   }

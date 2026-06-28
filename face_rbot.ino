@@ -231,7 +231,7 @@ void updateFaceLogic() {
     currentLerp = 0.35; // Ngủ: Chuyển trạng thái nhanh hơn nữa
   }
   else if (targetFace.eyeHeight == stateSurprised.eyeHeight) {
-    currentLerp = 0.7;  // Ngạc nhiên: Giật bắn mình mở to mắt (Cực nhanh)
+    currentLerp = 0.6;  // Ngạc nhiên: Giật bắn mình mở to mắt (Cực nhanh)
   }
   else if (targetFace.eyeAngle == stateAngry.eyeAngle) {
     currentLerp = 0.5;  // Giận dữ: Quắc mắt dứt khoát
@@ -580,8 +580,11 @@ void renderToScreen() {
   // 9 (Cry): Khóc run người, thỉnh thoảng nấc cụt
   if (targetEmotionCode == 9) {
     effY += sin(millis() / 300.0f) * 2.0f; // Run nhẹ
-    if (millis() % 1500 < 150) { // Mỗi 1.5s nấc một cái (kéo giật mắt lên trên)
-      effY -= 8.0f;
+    // Giảm tần suất nấc xuống mỗi 2.5s một lần (chậm hơn)
+    if (millis() % 2500 < 250) { 
+      // Dùng sóng sin mượt mà tạo hình vòng cung nấc lên rồi thả xuống (thay vì giật cục trừ 8.0)
+      float hiccupPhase = (millis() % 2500) / 250.0f; 
+      effY -= sin(hiccupPhase * PI) * 8.0f;
     }
   }
 
