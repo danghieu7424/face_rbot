@@ -849,11 +849,11 @@ void renderToScreen() {
       h = h * talkFactor;
     }
     
-    // Khi khóc nấc, miệng phải há to ra một chút để "ngáp hơi" (Gasping for air)
+    // Khi khóc nấc, miệng há ra một chút để "ngáp hơi" (Gasping for air)
     if (cryHiccupPower > 0.01f) {
-      h += cryHiccupPower * 15.0f;
+      h += cryHiccupPower * 6.0f;  // Giảm biên độ há miệng xuống (trước đây là 15.0f)
       // Miệng sẽ hơi thu nhỏ chiều rộng lại khi há to ra (chữ O)
-      w -= cryHiccupPower * 5.0f;
+      w -= cryHiccupPower * 2.0f;
     }
     
     if (h < 2) h = 2; // Guardrail: giữ miệng không bị sập hoàn toàn

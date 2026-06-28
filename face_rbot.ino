@@ -90,6 +90,7 @@ FaceState targetFace = stateIdle;
 // Giao tiếp liên lõi (Inter-core Communication)
 volatile int targetEmotionCode = 1; // Mặc định là Normal (1)
 int lastEmotionCode = 1; // Dùng trên Core 1 để phát hiện chuyển đổi trạng thái
+volatile unsigned long lastInteractionTime = 0; // Đếm thời gian rảnh để tự chuyển sang LookAround
 unsigned long winkStartTime = 0;
 unsigned long sleepStartTime = 0;
 bool winkDirection = false; // Luân phiên hướng nháy mắt (false=trái, true=phải)
@@ -198,6 +199,7 @@ void AITask(void *pvParameters) {
 
       if (code >= 0 && code < NUM_ACTIONS) {
         targetEmotionCode = code;
+        lastInteractionTime = millis(); // Reset thời gian rảnh
         Serial.print(">> [SERIAL] Chuyen sang trang thai: ");
         Serial.println(code);
       } else {
@@ -939,6 +941,7 @@ void loop() {
   static bool isBeingPetted = false;
 
   if (touchValue > touchThreshold) {
+    lastInteractionTime = millis(); // Reset thời gian rảnh khi có người vuốt
     if (!isBeingPetted) {
       isBeingPetted = true;
       savedEmotionCode = targetEmotionCode; // Lưu lại trạng thái cũ trước khi bị vuốt ve
@@ -958,7 +961,15 @@ void loop() {
     }
   }
 
-  // 2. Nhận biết sự thay đổi cảm xúc từ AI Task
+  // 3. Logic Timeout: Nếu đang ở trạng thái nhàn rỗi (0 hoặc 1) quá 15 giây mà không có tương tác, tự động nhìn xung quanh
+  if ((targetEmotionCode == 0 || targetEmotionCode == 1) && !isBeingPetted) {
+    if (millis() - lastInteractionTime > 15000) { 
+      targetEmotionCode = 12; // Chuyển sang LookAround
+      Serial.println(">> [AUTO] Khong co tuong tac 15s -> Tu dong chuyen sang nhin xung quanh (12)");
+    }
+  }
+
+  // 4. Nhận biết sự thay đổi cảm xúc từ AI Task
   if (targetEmotionCode != lastEmotionCode) {
     if (targetEmotionCode == 11) {
       winkStartTime = millis(); // Reset đồng hồ đo Wink
