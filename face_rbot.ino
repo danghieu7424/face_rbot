@@ -311,8 +311,7 @@ uint32_t lerpColor(uint32_t from, uint32_t to, float t) {
   uint8_t g = g1 + (g2 - g1) * t;
   uint8_t b = b1 + (b2 - b1) * t;
 
-  uint16_t c = tft.color565(r, g, b);
-  return c; // Bỏ Đảo byte (Endianness Swap) vì LovyanGFX tự xử lý nội bộ đúng cấu hình
+  return ((uint32_t)r << 16) | ((uint32_t)g << 8) | b; // Trả về mã màu chuẩn RGB888 (LovyanGFX sẽ tự ép kiểu chuẩn xác 100%)
 }
 
 // Thuật toán Scanline Rasterization vẽ bo góc Elip bất đối xứng + Gradient Dọc (VGradient) siêu mượt
@@ -450,8 +449,7 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
 
   if (targetEmotionCode == 10) {
     // 2. Vẽ Hiệu ứng Xoáy Thôi Miên
-    uint16_t c = tft.color565((colorTop >> 16) & 0xFF, (colorTop >> 8) & 0xFF, colorTop & 0xFF);
-    uint32_t color = c;
+    uint32_t color = colorTop; // Dùng trực tiếp RGB888
 
     float spin = millis() * 0.3f; // Tốc độ xoay
     for (int r = 5; r < (w / 2) - 2; r += 6) {
@@ -538,7 +536,8 @@ void renderToScreen() {
 
   // Sus (19): Ánh mắt phán xét (Nghiêng đầu, liếc xéo, nhướng mày)
   if (targetEmotionCode == 19) {
-    rightBlink = 0.5f;      // Nửa nhắm mắt phải
+    leftEyeScale = 1.3f;    // Mở to mắt trái
+    rightEyeScale = 0.8f;   // Thu gọn mắt phải (nhíu mày tự nhiên, không bị nhắm xịt)
     leftAngle = 15.0f;      // Nhướng mày trái lên (góc quay 15 độ)
     rightAngle = -15.0f;    // Cụp mày phải xuống (góc quay -15 độ)
     effX += 20.0f;          // Liếc xéo sang phải
