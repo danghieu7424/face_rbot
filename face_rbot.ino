@@ -60,7 +60,7 @@ struct FaceState {
 };
 
 // Khớp 100% với file HTML của user, bổ sung offsetX, offsetY
-const FaceState stateNormal    = {0, 40, 50, 20,  7, 4, 14,  8, 40, 2, 4,   0,   0};
+const FaceState stateNormal    = {0, 40, 50, 20,  7, 4, 14,  4, 40, 2, 4,   0,   0};
 const FaceState stateIdle      = {0, 40, 50, 20,  7, 4, 14,  0,  0, 0, 0,   0,   0};  
 const FaceState stateHappy     = {1, 45, 25, 20, 12, 4, 14, 25, 55, 2, 4,   0,  -5}; 
 const FaceState stateSad       = {0, 35, 40, 15,-10, 4, 14,  4, 20, 2, 4,   0,  15}; 
