@@ -124,15 +124,15 @@ void learn(int state, int action, float reward, int nextState);
 void AITask(void *pvParameters);
 #line 247 "C:\\rust\\face_rbot\\face_rbot.ino"
 void updateFaceLogic();
-#line 308 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 318 "C:\\rust\\face_rbot\\face_rbot.ino"
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
-#line 326 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 336 "C:\\rust\\face_rbot\\face_rbot.ino"
 void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth);
-#line 452 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 462 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 589 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 599 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 621 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 631 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 113 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -304,7 +304,11 @@ void updateFaceLogic() {
   
   // Tùy chỉnh tốc độ nhắm mắt: Ngạc nhiên thì chớp cực nhanh (50ms) để không bỏ lỡ khoảnh khắc
   unsigned long blinkDuration = 150; 
-  if (targetFace.eyeHeight == stateSurprised.eyeHeight) blinkDuration = 50;
+  if (targetFace.eyeHeight == stateSurprised.eyeHeight) {
+    blinkDuration = 50;
+  } else if (targetEmotionCode == 5 && targetFace.eyeHeight != stateSleep.eyeHeight) {
+    blinkDuration = 600; // Buồn ngủ: Mí mắt nặng trĩu, sụp mí rất lâu (600ms) mới mở lên lại
+  }
 
   if (now - lastBlinkTime > nextBlinkDelay) {
     targetBlinkFactor = 0.05; // Ép chiều cao về 5%
@@ -325,7 +329,13 @@ void updateFaceLogic() {
   }
   
   // Tốc độ khép mí: Ngạc nhiên chớp lẹ hơn bình thường (0.7 so với 0.5)
-  float blinkSpeed = (targetFace.eyeHeight == stateSurprised.eyeHeight) ? 0.7f : 0.5f;
+  float blinkSpeed = 0.5f;
+  if (targetFace.eyeHeight == stateSurprised.eyeHeight) {
+    blinkSpeed = 0.7f;
+  } else if (targetEmotionCode == 5 && targetFace.eyeHeight != stateSleep.eyeHeight) {
+    blinkSpeed = 0.15f; // Buồn ngủ: Mí mắt sụp xuống chậm rãi, lờ đờ
+  }
+  
   blinkFactor += (targetBlinkFactor - blinkFactor) * blinkSpeed; 
 }
 
@@ -651,7 +661,7 @@ void loop() {
     }
     if (targetEmotionCode == 5) {
       sleepStartTime = millis(); // Reset đồng hồ đo Sleep
-      sleepBlinkCount = 2; // Tái kích hoạt 2 lần chớp mắt mượt mà của hệ thống gốc
+      sleepBlinkCount = 1; // Nháy 1 cái thật chậm, nặng nề
       nextBlinkDelay = 100; // Bắt đầu nháy ngay sau 100ms
       lastBlinkTime = millis();
     }
@@ -666,8 +676,8 @@ void loop() {
     case 3: targetFace = stateSad; break;
     case 4: targetFace = stateTalk; break;
     case 5: 
-      // Đợi 1500ms (cho hệ thống gốc nháy mượt mà xong 2 lần) rồi mới gán stateSleep để nhắm tịt
-      if (millis() - sleepStartTime > 1500) {
+      // Đợi 2500ms (cho nhịp nháy mắt lờ đờ diễn ra trọn vẹn) rồi mới gán stateSleep để gục hẳn
+      if (millis() - sleepStartTime > 2500) {
         targetFace = stateSleep; 
       } else {
         targetFace = stateNormal; 
