@@ -299,7 +299,7 @@ uint32_t lerpColor(uint32_t from, uint32_t to, float t) {
 }
 
 // Thuật toán Scanline Rasterization vẽ bo góc Elip bất đối xứng + Gradient Dọc (VGradient) siêu mượt
-void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth) {
+void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, float h, float shapeType, uint32_t colorTop, uint32_t colorBot, bool isMouth, float pitchFactor = 0.0f) {
   float rTL_x=0, rTL_y=0, rTR_x=0, rTR_y=0, rBR_x=0, rBR_y=0, rBL_x=0, rBL_y=0;
   
   if (!isMouth) {
@@ -385,6 +385,13 @@ void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, f
       x_end = W - 1 - (rBR_x - (rBR_x * sqrt(val)));
     }
 
+    // --- HIỆU ỨNG PARALLAX 3D PITCH (TRAPEZOID) ---
+    // Thu hẹp 2 cạnh bên theo góc ngước lên/cúi xuống để tạo chiều sâu không gian
+    float depthScale = 1.0f + pitchFactor * (((float)y / H) - 0.5f);
+    float center = W / 2.0f;
+    x_start = center + (x_start - center) * depthScale;
+    x_end = center + (x_end - center) * depthScale;
+
     float t = (H > 1) ? (float)y / (H - 1) : 0;
     uint32_t color = lerpColor(colorTop, colorBot, t);
 
@@ -394,7 +401,7 @@ void drawGradientAsymmetricRect(LGFX_Sprite* spr, float cx, float cy, float w, f
   }
 }
 
-void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f, float extraAngle = 0.0f, float customBlink = -1.0f) {
+void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f, float extraAngle = 0.0f, float customBlink = -1.0f, float pitchFactor = 0.0f) {
   eyeSprite.fillSprite(TFT_BLACK);
   float pivotX = 60, pivotY = 60;
   eyeSprite.setPivot(pivotX, pivotY);
@@ -413,7 +420,7 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
 
   // 1. Vẽ Bóng Giả (Dark Blue) làm nền
   // Thu hẹp bề ngang (w - 4) để bóng không bị bè ra 2 bên góc, làm kích thước bóng nhỏ lại
-  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY, w - 4, h, shape, shadowColor, shadowColor, false);
+  drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY, w - 4, h, shape, shadowColor, shadowColor, false, pitchFactor);
 
   if (targetEmotionCode == 10) {
     // 2. Vẽ Hiệu ứng Xoáy Thôi Miên (Hypnotic Spirals)
@@ -429,9 +436,9 @@ void drawEye(float centerX, float centerY, bool isRightEye, float scale3D = 1.0f
   } else {
     // 2. GIẢI PHÁP CHUYỂN MÀU PHÂN LỚP (CONCENTRIC LAYERS)
     // Thu hẹp khoảng cách các lớp (w-2, w-4) để viền tối mỏng lại, lõi sáng to ra
-    drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 1, w,     h,     shape, colorBot, colorBot, false);
-    drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 2, w - 2, h - 2, shape, colorMid, colorMid, false);
-    drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 3, w - 4, h - 4, shape, colorTop, colorTop, false);
+    drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 1, w,     h,     shape, colorBot, colorBot, false, pitchFactor);
+    drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 2, w - 2, h - 2, shape, colorMid, colorMid, false, pitchFactor);
+    drawGradientAsymmetricRect(&eyeSprite, pivotX, pivotY - 3, w - 4, h - 4, shape, colorTop, colorTop, false, pitchFactor);
   }
 
   // Xoay và in ra màn hình
@@ -541,9 +548,12 @@ void renderToScreen() {
   // Giả lập chiều sâu 3D (Parallax): Mắt ở hướng nhìn ngược lại sẽ to hơn
   float leftEyeScale = 1.0f + (effX * 0.002f); 
   float rightEyeScale = 1.0f - (effX * 0.002f);
+  
+  // Phối cảnh 3D hình thang (Pitch): Ngước lên (effY < 0) thì trên bé lại. Cúi xuống (effY > 0) thì dưới bé lại.
+  float eyePitchFactor = -effY * 0.015f; 
 
-  drawEye(eyeLx, eyeY, false, leftEyeScale, 0.0f, leftBlink); 
-  drawEye(eyeRx, eyeY, true, rightEyeScale, 0.0f, rightBlink);
+  drawEye(eyeLx, eyeY, false, leftEyeScale, 0.0f, leftBlink, eyePitchFactor); 
+  drawEye(eyeRx, eyeY, true, rightEyeScale, 0.0f, rightBlink, eyePitchFactor);
 
   // Hiệu ứng Khóc (Cry - Code 9): Rơi nước mắt
   if (targetEmotionCode == 9) { 
@@ -571,8 +581,12 @@ void renderToScreen() {
     // Miệng đi theo mắt (theo effX, effY) thay vì chỉ offsetX cứng
     float mouthX = 120 + effX;
     float mouthY = 125 + effY;
-    float w = currentFace.mouthWidth;
-    float h = currentFace.mouthHeight;
+
+    // Phối cảnh 3D cho miệng: ngước lên (effY < 0) -> cằm gần lại -> miệng to ra. Cúi xuống (effY > 0) -> cằm lùi xa -> miệng bé lại.
+    float mouthDepthScale = 1.0f - (effY * 0.005f);
+    
+    float w = currentFace.mouthWidth * mouthDepthScale;
+    float h = currentFace.mouthHeight * mouthDepthScale;
     
     // --- OVERRIDE: TALK ANIMATION (Mấp máy môi) ---
     // Chỉ kích hoạt khi mục tiêu CHÍNH XÁC là trạng thái Nói (chiều cao miệng == 35)
@@ -588,8 +602,9 @@ void renderToScreen() {
 
     // Tính toán độ bo tròn tức thời (0% -> 50%) dựa trên chiều cao thực tế lúc đang nói
     float topRadiusFactor = 0.0f; 
-    if (h > 8.0f) {
-      topRadiusFactor = (h - 8.0f) * 0.0185f; // Bắt đầu bo tròn khi h > 8
+    float unscaledH = h / mouthDepthScale; // Dùng h gốc để tính bo tròn tránh bị bóp méo
+    if (unscaledH > 8.0f) {
+      topRadiusFactor = (unscaledH - 8.0f) * 0.0185f; // Bắt đầu bo tròn khi h > 8
       if (topRadiusFactor > 0.5f) topRadiusFactor = 0.5f; // Đạt đỉnh tròn trịa (50%)
     }
 
@@ -599,13 +614,16 @@ void renderToScreen() {
     uint32_t colorBot    = 0x00D200;
     uint32_t shadowColor = 0x00C800;
 
+    // Cả miệng cũng chịu hiệu ứng Trapezoid Pitch như mắt để đồng bộ (cùng nghiêng mặt)
+    float mouthPitchFactor = -effY * 0.015f;
+
     // Truyền topRadiusFactor vào tham số thứ 6 (shapeType) để đảm bảo mọi lớp đồng bộ độ bo góc
-    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, w - 4, h, topRadiusFactor, shadowColor, shadowColor, true);
+    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY, w - 4, h, topRadiusFactor, shadowColor, shadowColor, true, mouthPitchFactor);
     
     // Chuyển màu phân lớp cho Miệng (viền mỏng hơn)
-    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 1, w,     h,     topRadiusFactor, colorBot, colorBot, true);
-    if (h > 2) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 2, w - 2, h - 2, topRadiusFactor, colorMid, colorMid, true);
-    if (h > 4) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 3, w - 4, h - 4, topRadiusFactor, colorTop, colorTop, true);
+    drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 1, w,     h,     topRadiusFactor, colorBot, colorBot, true, mouthPitchFactor);
+    if (h > 2) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 2, w - 2, h - 2, topRadiusFactor, colorMid, colorMid, true, mouthPitchFactor);
+    if (h > 4) drawGradientAsymmetricRect(&canvasSprite, mouthX, mouthY - 3, w - 4, h - 4, topRadiusFactor, colorTop, colorTop, true, mouthPitchFactor);
   }
 
   canvasSprite.pushSprite(0, 0);
