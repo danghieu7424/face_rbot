@@ -173,35 +173,52 @@ void learn(int state, int action, float reward, int nextState) {
   qTable[state][action] = qTable[state][action] + LEARNING_RATE * (reward + DISCOUNT_FACTOR * maxFutureQ - qTable[state][action]);
 }
 
+// --- CẢM BIẾN CHẠM ---
+const int TOUCH_PIN = 2; 
+int touchThreshold = 30000; 
+unsigned long lastTouchTime = 0;
+
 // Task chạy trên Core 0 (Độc lập với Vẽ đồ họa)
 void AITask(void *pvParameters) {
   Serial.println("=========================================");
   Serial.println("AI DANG DUOC TAM DUNG DE DEBUG.");
-  Serial.println("Vui long nhap so tu 0 den 20 de doi mat:");
+  Serial.println("Vui long nhap so tu 0 den 20 de doi mat (Hoặc CHẠM vào chân số 2):");
   Serial.println("0:Idle 1:Normal 2:Happy 3:Sad 4:Talk 5:Sleep");
   Serial.println("6:Angry 7:Surprised 8:Doubt 9:Cry 10:Dizzy");
   Serial.println("11:Wink 12:LookAround 13:Panic 14:Smug");
   Serial.println("15:Scan 16:Bored 17:Love 18:Glitch 19:Sus 20:Furious");
   Serial.println("=========================================");
 
-  // int currentState = getStateIndex(currentTemp, currentSound, currentTouch);
-
   for (;;) {
+    // 1. Kiểm tra Serial Input (Giữ nguyên)
     if (Serial.available() > 0) {
       int code = Serial.parseInt();
-      // Đọc bỏ các ký tự thừa (như \n, \r)
-      while(Serial.available() > 0) Serial.read();
+      while(Serial.available() > 0) Serial.read(); // Đọc bỏ ký tự thừa
 
       if (code >= 0 && code < NUM_ACTIONS) {
         targetEmotionCode = code;
-        Serial.print(">> Chuyen sang trang thai: ");
+        Serial.print(">> [SERIAL] Chuyen sang trang thai: ");
         Serial.println(code);
       } else {
         Serial.println("Loi: Ma cam xuc phai tu 0 den 20.");
       }
     }
 
-    vTaskDelay(pdMS_TO_TICKS(100)); // Quét Serial mỗi 100ms
+    // 2. Kiểm tra Cảm biến chạm (Touch Sensor)
+    int touchValue = touchRead(TOUCH_PIN);
+    if (touchValue > touchThreshold) {
+      // Chống dội (Debounce) 500ms để 1 lần chạm không nhảy liên tục nhiều state
+      if (millis() - lastTouchTime > 500) { 
+        targetEmotionCode = (targetEmotionCode + 1) % NUM_ACTIONS;
+        Serial.print(">> [TOUCH] Phat hien cham! Gia tri: ");
+        Serial.print(touchValue);
+        Serial.print(" -> Chuyen sang trang thai: ");
+        Serial.println(targetEmotionCode);
+        lastTouchTime = millis();
+      }
+    }
+
+    vTaskDelay(pdMS_TO_TICKS(100)); // Quét Serial & Touch mỗi 100ms
   }
 }
 // ==========================================
