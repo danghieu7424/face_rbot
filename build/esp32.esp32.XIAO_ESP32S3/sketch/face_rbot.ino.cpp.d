@@ -178,6 +178,9 @@ C:\rust\face_rbot\build\esp32.esp32.XIAO_ESP32S3\sketch\face_rbot.ino.cpp.o: \
  C:\Users\dangh\AppData\Local\Arduino15\packages\esp32\hardware\esp32\2.0.11/tools/sdk/esp32s3/include/esp_hw_support/include/soc/esp32/spiram.h \
  C:\Users\dangh\AppData\Local\Arduino15\packages\esp32\hardware\esp32\2.0.11\cores\esp32/io_pin_remap.h \
  C:\Users\dangh\AppData\Local\Arduino15\packages\esp32\hardware\esp32\2.0.11\cores\esp32/Arduino.h \
+ C:\rust\face_rbot\build\esp32.esp32.XIAO_ESP32S3\sketch\FaceTypes.h \
+ C:\rust\face_rbot\build\esp32.esp32.XIAO_ESP32S3\sketch\FaceGlobals.h \
+ C:\rust\face_rbot\build\esp32.esp32.XIAO_ESP32S3\sketch\Display.h \
  C:\Users\dangh\Documents\Arduino\libraries\LovyanGFX\src/LovyanGFX.hpp \
  C:\Users\dangh\Documents\Arduino\libraries\LovyanGFX\src/lgfx/v1_init.hpp \
  C:\Users\dangh\Documents\Arduino\libraries\LovyanGFX\src/lgfx/v1/gitTagVersion.h \
@@ -295,4 +298,7 @@ C:\rust\face_rbot\build\esp32.esp32.XIAO_ESP32S3\sketch\face_rbot.ino.cpp.o: \
  C:\Users\dangh\Documents\Arduino\libraries\LovyanGFX\src/lgfx/v1/touch/Touch_STMPE610.hpp \
  C:\Users\dangh\Documents\Arduino\libraries\LovyanGFX\src/lgfx/v1/touch/Touch_TT21xxx.hpp \
  C:\Users\dangh\Documents\Arduino\libraries\LovyanGFX\src/lgfx/v1/touch/Touch_XPT2046.hpp \
- C:\Users\dangh\Documents\Arduino\libraries\LovyanGFX\src/lgfx/v1/touch/Touch_RA8875.hpp
+ C:\Users\dangh\Documents\Arduino\libraries\LovyanGFX\src/lgfx/v1/touch/Touch_RA8875.hpp \
+ C:\rust\face_rbot\build\esp32.esp32.XIAO_ESP32S3\sketch\Animation.h \
+ C:\rust\face_rbot\build\esp32.esp32.XIAO_ESP32S3\sketch\Comms.h \
+ C:\rust\face_rbot\build\esp32.esp32.XIAO_ESP32S3\sketch\AI_Logic.h

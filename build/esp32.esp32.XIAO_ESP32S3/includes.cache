@@ -20,6 +20,36 @@
     "Includepath": null
   },
   {
+    "Sourcefile": "C:\\rust\\face_rbot\\build\\esp32.esp32.XIAO_ESP32S3\\sketch\\AI_Logic.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\rust\\face_rbot\\build\\esp32.esp32.XIAO_ESP32S3\\sketch\\Animation.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\rust\\face_rbot\\build\\esp32.esp32.XIAO_ESP32S3\\sketch\\Comms.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\rust\\face_rbot\\build\\esp32.esp32.XIAO_ESP32S3\\sketch\\Display.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\rust\\face_rbot\\build\\esp32.esp32.XIAO_ESP32S3\\sketch\\FaceGlobals.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
+    "Sourcefile": "C:\\rust\\face_rbot\\build\\esp32.esp32.XIAO_ESP32S3\\sketch\\FaceTypes.cpp",
+    "Include": "",
+    "Includepath": null
+  },
+  {
     "Sourcefile": "C:\\Users\\dangh\\Documents\\Arduino\\libraries\\LovyanGFX\\src\\lgfx\\Fonts\\IPA\\lgfx_font_japan.c",
     "Include": "",
     "Includepath": null
