@@ -140,13 +140,13 @@ void learn(int state, int action, float reward, int nextState);
 void AITask(void *pvParameters);
 #line 233 "C:\\rust\\face_rbot\\face_rbot.ino"
 void updateFaceLogic();
-#line 323 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 326 "C:\\rust\\face_rbot\\face_rbot.ino"
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
-#line 516 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 519 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 908 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 911 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 946 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 949 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 129 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -258,6 +258,9 @@ void updateFaceLogic() {
   float currentLerp = 0.2; // Tăng default từ 0.1 lên 0.2 để mặt phản ứng lanh lẹ hơn
   if (targetFace.eyeHeight == stateSleep.eyeHeight) {
     currentLerp = 0.35; // Ngủ: Chuyển trạng thái nhanh hơn nữa
+  }
+  else if (targetFace.eyeAngle == -8) {
+    currentLerp = 0.5;  // Chép miệng sau ngáp: Tốc độ nội suy cực cao để bắt kịp sóng Sin
   }
   else if (targetFace.eyeHeight == stateSurprised.eyeHeight) {
     currentLerp = 0.6;  // Ngạc nhiên: Giật bắn mình mở to mắt (Cực nhanh)
@@ -1017,11 +1020,10 @@ void loop() {
         targetFace.eyeAngle = -8;    // Đuôi mắt cụp hẳn xuống vì quá buồn ngủ
         targetFace.eyeHeight = 4;    // Mắt nhắm chặt lại một nhịp sau khi ngáp to
         
-        // Hiệu ứng chép miệng và gật gù (chu kỳ chậm rãi 0.01 để nhìn rõ hơn)
-        // mouthHeight dao động từ 3 đến 9 (luôn > 2 để không bị vẽ thành đường thẳng)
-        targetFace.offsetY = 8 + 2 * sin(elapsed * 0.01);    
-        targetFace.mouthHeight = 6 + 3 * sin(elapsed * 0.01); 
-        targetFace.mouthWidth = 14 + 3 * cos(elapsed * 0.01);
+        // Hiệu ứng chép miệng và gật gù (Tăng tốc độ sóng và kích thước miệng)
+        targetFace.offsetY = 8 + 2 * sin(elapsed * 0.02);    
+        targetFace.mouthHeight = 5 + 4 * sin(elapsed * 0.025); 
+        targetFace.mouthWidth = 22 + 5 * cos(elapsed * 0.025);
       } else if (elapsed > 1200) {
         // Giai đoạn Ngáp (Yawn): Miệng mở to chữ O, mắt nhắm hờ, đầu hơi ngước
         targetFace = stateNormal; 
