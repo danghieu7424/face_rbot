@@ -91,11 +91,16 @@ FaceState targetFace = stateIdle;
 
 // Giao tiếp liên lõi (Inter-core Communication)
 volatile int targetEmotionCode = 1; // Mặc định là Normal (1)
-int lastEmotionCode = 0; // Dùng trên Core 0 để phát hiện chuyển đổi trạng thái
+int lastEmotionCode = 1; // Dùng trên Core 1 để phát hiện chuyển đổi trạng thái
 volatile unsigned long lastInteractionTime = 0; // Đếm thời gian rảnh để tự chuyển sang LookAround
 unsigned long winkStartTime = 0;
 unsigned long sleepStartTime = 0;
 bool winkDirection = false; // Luân phiên hướng nháy mắt (false=trái, true=phải)
+int sleepBlinkCount = 0;
+
+// Trạng thái nháy đèn GPIO 1 (Báo hiệu đổi mặt)
+unsigned long stateBlinkStartTime = 0;
+bool isStateBlinking = false;
 
 // ==========================================
 // HỆ THỐNG AI: Q-LEARNING & MOCK SENSORS
@@ -123,27 +128,27 @@ int currentSound = QUIET;
 int currentTouch = UNTOUCHED;
 
 // Hàm chuyển đổi tổ hợp cảm biến thành 1 mã trạng thái (0-11)
-#line 124 "C:\\rust\\face_rbot\\face_rbot.ino"
-int getStateIndex(int temp, int sound, int touch);
 #line 129 "C:\\rust\\face_rbot\\face_rbot.ino"
+int getStateIndex(int temp, int sound, int touch);
+#line 134 "C:\\rust\\face_rbot\\face_rbot.ino"
 void readMockSensors();
-#line 137 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 142 "C:\\rust\\face_rbot\\face_rbot.ino"
 float calculateReward(int state, int action);
-#line 167 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 172 "C:\\rust\\face_rbot\\face_rbot.ino"
 void learn(int state, int action, float reward, int nextState);
-#line 184 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 189 "C:\\rust\\face_rbot\\face_rbot.ino"
 void AITask(void *pvParameters);
-#line 229 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 233 "C:\\rust\\face_rbot\\face_rbot.ino"
 void updateFaceLogic();
-#line 319 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 323 "C:\\rust\\face_rbot\\face_rbot.ino"
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
-#line 512 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 516 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 904 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 908 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 936 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 946 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
-#line 124 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 129 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
   return temp * 4 + sound * 2 + touch;
 }
@@ -198,16 +203,16 @@ void learn(int state, int action, float reward, int nextState) {
   qTable[state][action] = qTable[state][action] + LEARNING_RATE * (reward + DISCOUNT_FACTOR * maxFutureQ - qTable[state][action]);
 }
 
-// --- CẢM BIẾN CHẠM ---
-const int TOUCH_PIN = 2; 
-int touchThreshold = 20000; // Đã hạ ngưỡng xuống 40,000 (do tay chạm thực tế khoảng 95,000)
-unsigned long lastTouchTime = 0;
+// --- KIẾN TRÚC HIỂN THỊ (SLAVE NODE) ---
+// ESP này chỉ chuyên nhận lệnh UART từ ESP khác (Master).
+// Các tác vụ phần cứng như Cảm biến chạm sẽ do Master lo.
 
-// Task chạy trên Core 1 (Độc lập với Vẽ đồ họa)
+
+// Task chạy trên Core 0 (Độc lập với Vẽ đồ họa)
 void AITask(void *pvParameters) {
   Serial.println("=========================================");
   Serial.println("AI DANG DUOC TAM DUNG DE DEBUG.");
-  Serial.println("Vui long nhap so tu 0 den 20 de doi mat (Hoặc CHẠM vào chân số 2):");
+  Serial.println("Vui long nhap so tu 0 den 20 qua UART:");
   Serial.println("0:Idle 1:Normal 2:Happy 3:Sad 4:Talk 5:Sleep");
   Serial.println("6:Angry 7:Surprised 8:Doubt 9:Cry 10:Dizzy");
   Serial.println("11:Wink 12:LookAround 13:Panic 14:Smug");
@@ -243,7 +248,6 @@ float blinkFactor = 1.0;
 float targetBlinkFactor = 1.0;
 unsigned long lastBlinkTime = 0;
 unsigned long nextBlinkDelay = 3000;
-int sleepBlinkCount = 0; // Đếm số lần chớp mắt lúc buồn ngủ
 
 // --- OVERRIDE: ANIMATION WEIGHTS ---
 float susWeight = 0.0f;
@@ -926,6 +930,11 @@ unsigned long nextStateDelay = 2000;
 
 void setup() {
   Serial.begin(115200);
+
+  // Cấu hình LED báo hiệu đổi mặt
+  pinMode(1, OUTPUT);
+  digitalWrite(1, LOW);
+
   tft.init();
   tft.setRotation(0); 
   tft.fillScreen(tft.color565(0, 0, 0)); 
@@ -944,7 +953,8 @@ void setup() {
     while (1); 
   }
 
-  // Khởi chạy AI Task trên Core 1 (Priority 1)
+  // Khởi chạy AI Task trên Core 0 (Priority 1) để rảnh rang xử lý UART
+  // Giúp Core 1 cống hiến 100% thời gian cho render đồ họa (Tối đa hóa FPS)
   xTaskCreatePinnedToCore(
     AITask,       // Hàm thực thi
     "AI_Task",    // Tên task
@@ -952,46 +962,17 @@ void setup() {
     NULL,         // Tham số
     1,            // Độ ưu tiên
     NULL,         // Task handle
-    1             // Ghim vào Core 1
+    0             // Ghim vào Core 0
   );
 }
 
 void loop() {
-  // 1. Kiểm tra Cảm biến chạm (Touch Sensor)
-  // [BẢO VỆ PHẦN CỨNG]: Đọc cảm biến cách nhau ít nhất 50ms để tụ điện trong chip ESP32 kịp nạp xả, tránh lỗi "lúc được lúc không"
-  static unsigned long lastTouchRead = 0;
-  
-  static int savedEmotionCode = 1;
-  static bool isBeingPetted = false;
+  // --- HIỂN THỊ VÀ LOGIC MÀN HÌNH ---
+  // AITask (Core 0) sẽ liên tục cập nhật biến targetEmotionCode từ UART.
+  // Vòng lặp này (Core 1) chỉ tập trung vào việc vẽ ra màn hình.
 
-  if (millis() - lastTouchRead > 50) {
-    lastTouchRead = millis();
-    int touchValue = touchRead(TOUCH_PIN);
-    
-    if (touchValue > touchThreshold) {
-      lastInteractionTime = millis(); // Reset thời gian rảnh khi có người vuốt
-      if (!isBeingPetted) {
-        isBeingPetted = true;
-        savedEmotionCode = targetEmotionCode; // Lưu lại trạng thái cũ trước khi bị vuốt ve
-        targetEmotionCode = 21; // 21 là trạng thái Petting
-        Serial.print(">> [TOUCH] Phat hien vuot ve! (Touch = ");
-        Serial.print(touchValue);
-        Serial.println(") -> Chuyen sang trang thai 21 (Petting)");
-      }
-      lastTouchTime = millis(); // Liên tục cập nhật thời gian chừng nào còn giữ tay
-    } else {
-      // Đợi 1 giây (1000ms) sau khi buông tay để tự động trở về biểu cảm cũ
-      if (isBeingPetted && (millis() - lastTouchTime > 1000)) {
-        isBeingPetted = false;
-        targetEmotionCode = savedEmotionCode; 
-        Serial.print(">> [TOUCH] Da tha tay -> Phuc hoi trang thai cu: ");
-        Serial.println(targetEmotionCode);
-      }
-    }
-  }
-
-  // 3. Logic Timeout: Nếu đang ở trạng thái nhàn rỗi (0 hoặc 1) quá 15 giây mà không có tương tác, tự động nhìn xung quanh
-  if ((targetEmotionCode == 0 || targetEmotionCode == 1) && !isBeingPetted) {
+  // 1. Logic Timeout: Nếu đang ở trạng thái nhàn rỗi (0 hoặc 1) quá 15 giây mà không có lệnh UART mới, tự động nhìn xung quanh
+  if (targetEmotionCode == 0 || targetEmotionCode == 1) {
     if (millis() - lastInteractionTime > 15000) { 
       targetEmotionCode = 12; // Chuyển sang LookAround
       Serial.println(">> [AUTO] Khong co tuong tac 15s -> Tu dong chuyen sang nhin xung quanh (12)");
@@ -1000,6 +981,11 @@ void loop() {
 
   // 4. Nhận biết sự thay đổi cảm xúc từ AI Task
   if (targetEmotionCode != lastEmotionCode) {
+    // Nháy đèn GPIO 1 để báo hiệu nhận lệnh
+    digitalWrite(1, HIGH);
+    stateBlinkStartTime = millis();
+    isStateBlinking = true;
+
     if (targetEmotionCode == 11) {
       winkStartTime = millis(); // Reset đồng hồ đo Wink
       winkDirection = !winkDirection; // Đảo hướng nháy mắt luân phiên
@@ -1023,8 +1009,16 @@ void loop() {
     case 5: {
       // Chuỗi hiệu ứng Sleep: Chớp mắt mệt mỏi -> Ngáp dài -> Nhắm mắt gục ngủ
       unsigned long elapsed = millis() - sleepStartTime;
-      if (elapsed > 3500) {
+      if (elapsed > 4000) {
         targetFace = stateSleep; // Gục hẳn
+      }  else if (elapsed > 3500) {
+        // giai đoạn ngáp xong
+        targetFace = stateNormal; 
+        targetFace.eyeAngle = 0; 
+        targetFace.eyeHeight = 25;   // Mắt sụp xuống một nửa
+        targetFace.offsetY = -5;     // Đầu ngước lên nhẹ
+        targetFace.mouthHeight = 2; // Mồm bé dần
+        targetFace.mouthWidth = 7;  // Mồm thu hẹp lại
       } else if (elapsed > 1200) {
         // Giai đoạn Ngáp (Yawn): Miệng mở to chữ O, mắt nhắm hờ, đầu hơi ngước
         targetFace = stateNormal; 
@@ -1063,6 +1057,12 @@ void loop() {
   // Cập nhật Logic & Render liên tục trên Core 1
   updateFaceLogic();
   renderToScreen();
+
+  // Tự động tắt đèn GPIO 1 sau 50ms chớp sáng (Không dùng delay để tránh khựng màn hình)
+  if (isStateBlinking && (millis() - stateBlinkStartTime > 50)) {
+    digitalWrite(1, LOW);
+    isStateBlinking = false;
+  }
 
   // Nhường CPU cho FreeRTOS (Delay 50ms = 20 FPS ổn định)
   vTaskDelay(pdMS_TO_TICKS(50));
