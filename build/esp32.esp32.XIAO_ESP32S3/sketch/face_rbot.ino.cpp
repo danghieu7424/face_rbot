@@ -92,6 +92,7 @@ FaceState targetFace = stateIdle;
 // Giao tiếp liên lõi (Inter-core Communication)
 volatile int targetEmotionCode = 1; // Mặc định là Normal (1)
 int lastEmotionCode = 1; // Dùng trên Core 1 để phát hiện chuyển đổi trạng thái
+volatile unsigned long lastInteractionTime = 0; // Đếm thời gian rảnh để tự chuyển sang LookAround
 unsigned long winkStartTime = 0;
 unsigned long sleepStartTime = 0;
 bool winkDirection = false; // Luân phiên hướng nháy mắt (false=trái, true=phải)
@@ -122,27 +123,27 @@ int currentSound = QUIET;
 int currentTouch = UNTOUCHED;
 
 // Hàm chuyển đổi tổ hợp cảm biến thành 1 mã trạng thái (0-11)
-#line 123 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 124 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch);
-#line 128 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 129 "C:\\rust\\face_rbot\\face_rbot.ino"
 void readMockSensors();
-#line 136 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 137 "C:\\rust\\face_rbot\\face_rbot.ino"
 float calculateReward(int state, int action);
-#line 166 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 167 "C:\\rust\\face_rbot\\face_rbot.ino"
 void learn(int state, int action, float reward, int nextState);
-#line 183 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 184 "C:\\rust\\face_rbot\\face_rbot.ino"
 void AITask(void *pvParameters);
-#line 227 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 229 "C:\\rust\\face_rbot\\face_rbot.ino"
 void updateFaceLogic();
-#line 317 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 319 "C:\\rust\\face_rbot\\face_rbot.ino"
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
-#line 510 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 512 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 902 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 904 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 934 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 936 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
-#line 123 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 124 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
   return temp * 4 + sound * 2 + touch;
 }
@@ -199,7 +200,7 @@ void learn(int state, int action, float reward, int nextState) {
 
 // --- CẢM BIẾN CHẠM ---
 const int TOUCH_PIN = 2; 
-int touchThreshold = 50000; // Đã tinh chỉnh ngưỡng (16484 -> 95730)
+int touchThreshold = 200000; // Đã tinh chỉnh ngưỡng (16484 -> 95730)
 unsigned long lastTouchTime = 0;
 
 // Task chạy trên Core 0 (Độc lập với Vẽ đồ họa)
@@ -221,6 +222,7 @@ void AITask(void *pvParameters) {
 
       if (code >= 0 && code < NUM_ACTIONS) {
         targetEmotionCode = code;
+        lastInteractionTime = millis(); // Reset thời gian rảnh
         Serial.print(">> [SERIAL] Chuyen sang trang thai: ");
         Serial.println(code);
       } else {
@@ -962,6 +964,7 @@ void loop() {
   static bool isBeingPetted = false;
 
   if (touchValue > touchThreshold) {
+    lastInteractionTime = millis(); // Reset thời gian rảnh khi có người vuốt
     if (!isBeingPetted) {
       isBeingPetted = true;
       savedEmotionCode = targetEmotionCode; // Lưu lại trạng thái cũ trước khi bị vuốt ve
@@ -981,7 +984,15 @@ void loop() {
     }
   }
 
-  // 2. Nhận biết sự thay đổi cảm xúc từ AI Task
+  // 3. Logic Timeout: Nếu đang ở trạng thái nhàn rỗi (0 hoặc 1) quá 15 giây mà không có tương tác, tự động nhìn xung quanh
+  if ((targetEmotionCode == 0 || targetEmotionCode == 1) && !isBeingPetted) {
+    if (millis() - lastInteractionTime > 15000) { 
+      targetEmotionCode = 12; // Chuyển sang LookAround
+      Serial.println(">> [AUTO] Khong co tuong tac 15s -> Tu dong chuyen sang nhin xung quanh (12)");
+    }
+  }
+
+  // 4. Nhận biết sự thay đổi cảm xúc từ AI Task
   if (targetEmotionCode != lastEmotionCode) {
     if (targetEmotionCode == 11) {
       winkStartTime = millis(); // Reset đồng hồ đo Wink
