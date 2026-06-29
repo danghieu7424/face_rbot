@@ -1011,14 +1011,14 @@ void loop() {
       unsigned long elapsed = millis() - sleepStartTime;
       if (elapsed > 4000) {
         targetFace = stateSleep; // Gục hẳn
-      }  else if (elapsed > 3500) {
-        // giai đoạn ngáp xong
+      } else if (elapsed > 3500) {
+        // Giai đoạn ngáp xong (3500ms - 4000ms): Nhắm nghiền mắt lại, đầu gục nhẹ xuống, chép miệng
         targetFace = stateNormal; 
-        targetFace.eyeAngle = 0; 
-        targetFace.eyeHeight = 25;   // Mắt sụp xuống một nửa
-        targetFace.offsetY = -5;     // Đầu ngước lên nhẹ
-        targetFace.mouthHeight = 2; // Mồm bé dần
-        targetFace.mouthWidth = 7;  // Mồm thu hẹp lại
+        targetFace.eyeAngle = -8;    // Đuôi mắt cụp hẳn xuống vì quá buồn ngủ
+        targetFace.eyeHeight = 4;    // Mắt nhắm chặt lại một nhịp sau khi ngáp to
+        targetFace.offsetY = 8;      // Đầu bắt đầu gục nặng xuống dưới (lực hấp dẫn)
+        targetFace.mouthHeight = 1;  // Mím môi lại
+        targetFace.mouthWidth = 14;  // Môi hơi dãn ngang ra như đang chép miệng chép vai
       } else if (elapsed > 1200) {
         // Giai đoạn Ngáp (Yawn): Miệng mở to chữ O, mắt nhắm hờ, đầu hơi ngước
         targetFace = stateNormal; 
