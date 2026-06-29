@@ -1009,16 +1009,19 @@ void loop() {
     case 5: {
       // Chuỗi hiệu ứng Sleep: Chớp mắt mệt mỏi -> Ngáp dài -> Nhắm mắt gục ngủ
       unsigned long elapsed = millis() - sleepStartTime;
-      if (elapsed > 4000) {
+      if (elapsed > 4500) {
         targetFace = stateSleep; // Gục hẳn
       } else if (elapsed > 3500) {
-        // Giai đoạn ngáp xong (3500ms - 4000ms): Nhắm nghiền mắt lại, đầu gục nhẹ xuống, chép miệng
+        // Giai đoạn ngáp xong (3500ms - 4500ms): Nhắm nghiền mắt lại, đầu gục nhẹ xuống, chép miệng "mlem mlem"
         targetFace = stateNormal; 
         targetFace.eyeAngle = -8;    // Đuôi mắt cụp hẳn xuống vì quá buồn ngủ
         targetFace.eyeHeight = 4;    // Mắt nhắm chặt lại một nhịp sau khi ngáp to
         targetFace.offsetY = 8;      // Đầu bắt đầu gục nặng xuống dưới (lực hấp dẫn)
-        targetFace.mouthHeight = 1;  // Mím môi lại
-        targetFace.mouthWidth = 14;  // Môi hơi dãn ngang ra như đang chép miệng chép vai
+        
+        // Hiệu ứng chép miệng: Dùng sóng sin() để môi liên tục mở ra khép lại nhẹ nhàng
+        // mouthHeight dao động từ 3 đến 9 (luôn > 2 để không bị biến mất thành 1 đường thẳng)
+        targetFace.mouthHeight = 6 + 3 * sin(elapsed * 0.02); 
+        targetFace.mouthWidth = 14 + 2 * cos(elapsed * 0.02); 
       } else if (elapsed > 1200) {
         // Giai đoạn Ngáp (Yawn): Miệng mở to chữ O, mắt nhắm hờ, đầu hơi ngước
         targetFace = stateNormal; 

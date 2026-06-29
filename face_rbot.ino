@@ -989,16 +989,16 @@ void loop() {
       if (elapsed > 4500) {
         targetFace = stateSleep; // Gục hẳn
       } else if (elapsed > 3500) {
-        // Giai đoạn ngáp xong (3500ms - 4500ms): Nhắm nghiền mắt lại, đầu gục nhẹ xuống, chép miệng "mlem mlem"
+        // Giai đoạn ngáp xong (3500ms - 4500ms): Nhắm nghiền mắt lại, gật gù và chép miệng "mlem mlem"
         targetFace = stateNormal; 
         targetFace.eyeAngle = -8;    // Đuôi mắt cụp hẳn xuống vì quá buồn ngủ
         targetFace.eyeHeight = 4;    // Mắt nhắm chặt lại một nhịp sau khi ngáp to
-        targetFace.offsetY = 8;      // Đầu bắt đầu gục nặng xuống dưới (lực hấp dẫn)
         
-        // Hiệu ứng chép miệng: Dùng sóng sin() để môi liên tục mở ra khép lại nhẹ nhàng
-        // mouthHeight dao động từ 3 đến 9 (luôn > 2 để không bị biến mất thành 1 đường thẳng)
-        targetFace.mouthHeight = 6 + 3 * sin(elapsed * 0.02); 
-        targetFace.mouthWidth = 14 + 2 * cos(elapsed * 0.02); 
+        // Hiệu ứng chép miệng và gật gù: Giảm tần số xuống 0.015 để hàm Lerp có thể bắt kịp mượt mà
+        // Mỗi chu kỳ mlem sẽ mất khoảng 400ms (rất tự nhiên)
+        targetFace.offsetY = 8 + 2 * sin(elapsed * 0.015);    // Đầu gật gù nhẹ
+        targetFace.mouthHeight = 5 + 4 * sin(elapsed * 0.015); // Miệng dao động từ 1 đến 9
+        targetFace.mouthWidth = 14 + 3 * cos(elapsed * 0.015); // Chiều rộng cũng co bóp theo
       } else if (elapsed > 1200) {
         // Giai đoạn Ngáp (Yawn): Miệng mở to chữ O, mắt nhắm hờ, đầu hơi ngước
         targetFace = stateNormal; 
