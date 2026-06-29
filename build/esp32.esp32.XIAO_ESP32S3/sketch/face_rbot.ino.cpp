@@ -968,6 +968,14 @@ void loop() {
     lastTouchRead = millis();
     int touchValue = touchRead(TOUCH_PIN);
     
+    // [DEBUG LOG]: In giá trị thô ra Serial mỗi 500ms để kiểm tra lỗi "lúc được lúc không"
+    static unsigned long lastDebugPrint = 0;
+    if (millis() - lastDebugPrint > 500) {
+      lastDebugPrint = millis();
+      Serial.print(">> [DEBUG] Gia tri Touch tho (Raw): ");
+      Serial.println(touchValue);
+    }
+    
     if (touchValue > touchThreshold) {
       lastInteractionTime = millis(); // Reset thời gian rảnh khi có người vuốt
       if (!isBeingPetted) {
