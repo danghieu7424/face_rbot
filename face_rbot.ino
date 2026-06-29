@@ -89,7 +89,7 @@ FaceState targetFace = stateIdle;
 
 // Giao tiếp liên lõi (Inter-core Communication)
 volatile int targetEmotionCode = 1; // Mặc định là Normal (1)
-int lastEmotionCode = 0; // Dùng trên Core 0 để phát hiện chuyển đổi trạng thái
+int lastEmotionCode = 1; // Dùng trên Core 1 để phát hiện chuyển đổi trạng thái
 volatile unsigned long lastInteractionTime = 0; // Đếm thời gian rảnh để tự chuyển sang LookAround
 unsigned long winkStartTime = 0;
 unsigned long sleepStartTime = 0;
@@ -175,11 +175,12 @@ void learn(int state, int action, float reward, int nextState) {
   qTable[state][action] = qTable[state][action] + LEARNING_RATE * (reward + DISCOUNT_FACTOR * maxFutureQ - qTable[state][action]);
 }
 
-// ESP khác sẽ gửi lệnh cảm xúc (0-21) qua cổng UART (Serial)
-// Nên phần này không cần khởi tạo chân TOUCH_PIN nữa.
+// --- KIẾN TRÚC HIỂN THỊ (SLAVE NODE) ---
+// ESP này chỉ chuyên nhận lệnh UART từ ESP khác (Master).
+// Các tác vụ phần cứng như Cảm biến chạm sẽ do Master lo.
 
 
-// Task chạy trên Core 1 (Độc lập với Vẽ đồ họa)
+// Task chạy trên Core 0 (Độc lập với Vẽ đồ họa)
 void AITask(void *pvParameters) {
   Serial.println("=========================================");
   Serial.println("AI DANG DUOC TAM DUNG DE DEBUG.");
@@ -920,8 +921,8 @@ void setup() {
     while (1); 
   }
 
-  // Khởi chạy AI Task trên Core 0 (Priority 1) để xử lý riêng UART
-  // Để Core 1 dồn 100% sức mạnh cho việc vẽ đồ họa, đảm bảo không bao giờ bị khựng (stutter).
+  // Khởi chạy AI Task trên Core 0 (Priority 1) để rảnh rang xử lý UART
+  // Giúp Core 1 cống hiến 100% thời gian cho render đồ họa (Tối đa hóa FPS)
   xTaskCreatePinnedToCore(
     AITask,       // Hàm thực thi
     "AI_Task",    // Tên task
@@ -929,17 +930,16 @@ void setup() {
     NULL,         // Tham số
     1,            // Độ ưu tiên
     NULL,         // Task handle
-    0             // Ghim vào Core 0 (Rất quan trọng để tối ưu FPS)
+    0             // Ghim vào Core 0
   );
 }
 
 void loop() {
-  // --- BỎ LOGIC TOUCH CỤC BỘ ---
-  // ESP32 này giờ chỉ đóng vai trò làm Màn hình (Display Node).
-  // Các lệnh vuốt ve (21) hay bình thường (1) sẽ được ESP khác gửi qua Serial (UART).
+  // --- HIỂN THỊ VÀ LOGIC MÀN HÌNH ---
+  // AITask (Core 0) sẽ liên tục cập nhật biến targetEmotionCode từ UART.
+  // Vòng lặp này (Core 1) chỉ tập trung vào việc vẽ ra màn hình.
 
-
-  // 2. Logic Timeout: Nếu đang ở trạng thái nhàn rỗi (0 hoặc 1) quá 15 giây mà không có lệnh UART mới, tự động nhìn xung quanh
+  // 1. Logic Timeout: Nếu đang ở trạng thái nhàn rỗi (0 hoặc 1) quá 15 giây mà không có lệnh UART mới, tự động nhìn xung quanh
   if (targetEmotionCode == 0 || targetEmotionCode == 1) {
     if (millis() - lastInteractionTime > 15000) { 
       targetEmotionCode = 12; // Chuyển sang LookAround
