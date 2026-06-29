@@ -94,6 +94,11 @@ volatile unsigned long lastInteractionTime = 0; // Đếm thời gian rảnh đ�
 unsigned long winkStartTime = 0;
 unsigned long sleepStartTime = 0;
 bool winkDirection = false; // Luân phiên hướng nháy mắt (false=trái, true=phải)
+int sleepBlinkCount = 0;
+
+// Trạng thái nháy đèn GPIO 1 (Báo hiệu đổi mặt)
+unsigned long stateBlinkStartTime = 0;
+bool isStateBlinking = false;
 
 // ==========================================
 // HỆ THỐNG AI: Q-LEARNING & MOCK SENSORS
@@ -184,7 +189,7 @@ void learn(int state, int action, float reward, int nextState) {
 void AITask(void *pvParameters) {
   Serial.println("=========================================");
   Serial.println("AI DANG DUOC TAM DUNG DE DEBUG.");
-  Serial.println("Vui long nhap so tu 0 den 20 de doi mat (Hoặc CHẠM vào chân số 2):");
+  Serial.println("Vui long nhap so tu 0 den 20 qua UART:");
   Serial.println("0:Idle 1:Normal 2:Happy 3:Sad 4:Talk 5:Sleep");
   Serial.println("6:Angry 7:Surprised 8:Doubt 9:Cry 10:Dizzy");
   Serial.println("11:Wink 12:LookAround 13:Panic 14:Smug");
@@ -220,7 +225,6 @@ float blinkFactor = 1.0;
 float targetBlinkFactor = 1.0;
 unsigned long lastBlinkTime = 0;
 unsigned long nextBlinkDelay = 3000;
-int sleepBlinkCount = 0; // Đếm số lần chớp mắt lúc buồn ngủ
 
 // --- OVERRIDE: ANIMATION WEIGHTS ---
 float susWeight = 0.0f;
@@ -903,6 +907,11 @@ unsigned long nextStateDelay = 2000;
 
 void setup() {
   Serial.begin(115200);
+
+  // Cấu hình LED báo hiệu đổi mặt
+  pinMode(1, OUTPUT);
+  digitalWrite(1, LOW);
+
   tft.init();
   tft.setRotation(0); 
   tft.fillScreen(tft.color565(0, 0, 0)); 
@@ -949,6 +958,11 @@ void loop() {
 
   // 4. Nhận biết sự thay đổi cảm xúc từ AI Task
   if (targetEmotionCode != lastEmotionCode) {
+    // Nháy đèn GPIO 1 để báo hiệu nhận lệnh
+    digitalWrite(1, HIGH);
+    stateBlinkStartTime = millis();
+    isStateBlinking = true;
+
     if (targetEmotionCode == 11) {
       winkStartTime = millis(); // Reset đồng hồ đo Wink
       winkDirection = !winkDirection; // Đảo hướng nháy mắt luân phiên
@@ -1012,6 +1026,12 @@ void loop() {
   // Cập nhật Logic & Render liên tục trên Core 1
   updateFaceLogic();
   renderToScreen();
+
+  // Tự động tắt đèn GPIO 1 sau 50ms chớp sáng (Không dùng delay để tránh khựng màn hình)
+  if (isStateBlinking && (millis() - stateBlinkStartTime > 50)) {
+    digitalWrite(1, LOW);
+    isStateBlinking = false;
+  }
 
   // Nhường CPU cho FreeRTOS (Delay 50ms = 20 FPS ổn định)
   vTaskDelay(pdMS_TO_TICKS(50));
