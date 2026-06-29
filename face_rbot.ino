@@ -177,7 +177,7 @@ void learn(int state, int action, float reward, int nextState) {
 
 // --- CẢM BIẾN CHẠM ---
 const int TOUCH_PIN = 2; 
-int touchThreshold = 40000; // Đã hạ ngưỡng xuống 40,000 (do tay chạm thực tế khoảng 95,000)
+int touchThreshold = 20000; // Đã hạ ngưỡng xuống 40,000 (do tay chạm thực tế khoảng 95,000)
 unsigned long lastTouchTime = 0;
 
 // Task chạy trên Core 0 (Độc lập với Vẽ đồ họa)
@@ -944,6 +944,14 @@ void loop() {
   if (millis() - lastTouchRead > 50) {
     lastTouchRead = millis();
     int touchValue = touchRead(TOUCH_PIN);
+    
+    // [DEBUG LOG]: In giá trị thô ra Serial mỗi 500ms để kiểm tra lỗi "lúc được lúc không"
+    static unsigned long lastDebugPrint = 0;
+    if (millis() - lastDebugPrint > 500) {
+      lastDebugPrint = millis();
+      Serial.print(">> [DEBUG] Gia tri Touch tho (Raw): ");
+      Serial.println(touchValue);
+    }
     
     if (touchValue > touchThreshold) {
       lastInteractionTime = millis(); // Reset thời gian rảnh khi có người vuốt

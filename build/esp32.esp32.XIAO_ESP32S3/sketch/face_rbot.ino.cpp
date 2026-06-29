@@ -200,7 +200,7 @@ void learn(int state, int action, float reward, int nextState) {
 
 // --- CẢM BIẾN CHẠM ---
 const int TOUCH_PIN = 2; 
-int touchThreshold = 200000; // Đã tinh chỉnh ngưỡng (16484 -> 95730)
+int touchThreshold = 20000; // Đã hạ ngưỡng xuống 40,000 (do tay chạm thực tế khoảng 95,000)
 unsigned long lastTouchTime = 0;
 
 // Task chạy trên Core 0 (Độc lập với Vẽ đồ họa)
@@ -957,30 +957,36 @@ void setup() {
 }
 
 void loop() {
-  // 1. Kiểm tra Cảm biến chạm (Touch Sensor) trên Core 1
-  int touchValue = touchRead(TOUCH_PIN);
+  // 1. Kiểm tra Cảm biến chạm (Touch Sensor)
+  // [BẢO VỆ PHẦN CỨNG]: Đọc cảm biến cách nhau ít nhất 50ms để tụ điện trong chip ESP32 kịp nạp xả, tránh lỗi "lúc được lúc không"
+  static unsigned long lastTouchRead = 0;
   
   static int savedEmotionCode = 1;
   static bool isBeingPetted = false;
 
-  if (touchValue > touchThreshold) {
-    lastInteractionTime = millis(); // Reset thời gian rảnh khi có người vuốt
-    if (!isBeingPetted) {
-      isBeingPetted = true;
-      savedEmotionCode = targetEmotionCode; // Lưu lại trạng thái cũ trước khi bị vuốt ve
-      targetEmotionCode = 21; // 21 là trạng thái Petting
-      Serial.print(">> [TOUCH] Phat hien vuot ve! (Touch = ");
-      Serial.print(touchValue);
-      Serial.println(") -> Chuyen sang trang thai 21 (Petting)");
-    }
-    lastTouchTime = millis(); // Liên tục cập nhật thời gian chừng nào còn giữ tay
-  } else {
-    // Đợi 1 giây (1000ms) sau khi buông tay để tự động trở về biểu cảm cũ
-    if (isBeingPetted && (millis() - lastTouchTime > 1000)) {
-      isBeingPetted = false;
-      targetEmotionCode = savedEmotionCode; 
-      Serial.print(">> [TOUCH] Da tha tay -> Phuc hoi trang thai cu: ");
-      Serial.println(targetEmotionCode);
+  if (millis() - lastTouchRead > 50) {
+    lastTouchRead = millis();
+    int touchValue = touchRead(TOUCH_PIN);
+    
+    if (touchValue > touchThreshold) {
+      lastInteractionTime = millis(); // Reset thời gian rảnh khi có người vuốt
+      if (!isBeingPetted) {
+        isBeingPetted = true;
+        savedEmotionCode = targetEmotionCode; // Lưu lại trạng thái cũ trước khi bị vuốt ve
+        targetEmotionCode = 21; // 21 là trạng thái Petting
+        Serial.print(">> [TOUCH] Phat hien vuot ve! (Touch = ");
+        Serial.print(touchValue);
+        Serial.println(") -> Chuyen sang trang thai 21 (Petting)");
+      }
+      lastTouchTime = millis(); // Liên tục cập nhật thời gian chừng nào còn giữ tay
+    } else {
+      // Đợi 1 giây (1000ms) sau khi buông tay để tự động trở về biểu cảm cũ
+      if (isBeingPetted && (millis() - lastTouchTime > 1000)) {
+        isBeingPetted = false;
+        targetEmotionCode = savedEmotionCode; 
+        Serial.print(">> [TOUCH] Da tha tay -> Phuc hoi trang thai cu: ");
+        Serial.println(targetEmotionCode);
+      }
     }
   }
 
