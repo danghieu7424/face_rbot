@@ -89,7 +89,7 @@ FaceState targetFace = stateIdle;
 
 // Giao tiếp liên lõi (Inter-core Communication)
 volatile int targetEmotionCode = 1; // Mặc định là Normal (1)
-int lastEmotionCode = 1; // Dùng trên Core 1 để phát hiện chuyển đổi trạng thái
+int lastEmotionCode = 0; // Dùng trên Core 0 để phát hiện chuyển đổi trạng thái
 volatile unsigned long lastInteractionTime = 0; // Đếm thời gian rảnh để tự chuyển sang LookAround
 unsigned long winkStartTime = 0;
 unsigned long sleepStartTime = 0;
@@ -175,12 +175,42 @@ void learn(int state, int action, float reward, int nextState) {
   qTable[state][action] = qTable[state][action] + LEARNING_RATE * (reward + DISCOUNT_FACTOR * maxFutureQ - qTable[state][action]);
 }
 
-// --- CẢM BIẾN CHẠM ---
-const int TOUCH_PIN = 2; 
-int touchThreshold = 20000; // Đã hạ ngưỡng xuống 40,000 (do tay chạm thực tế khoảng 95,000)
-unsigned long lastTouchTime = 0;
+// ESP khác sẽ gửi lệnh cảm xúc (0-21) qua cổng UART (Serial)
+// Nên phần này không cần khởi tạo chân TOUCH_PIN nữa.
 
 
+// Task chạy trên Core 1 (Độc lập với Vẽ đồ họa)
+void AITask(void *pvParameters) {
+  Serial.println("=========================================");
+  Serial.println("AI DANG DUOC TAM DUNG DE DEBUG.");
+  Serial.println("Vui long nhap so tu 0 den 20 de doi mat (Hoặc CHẠM vào chân số 2):");
+  Serial.println("0:Idle 1:Normal 2:Happy 3:Sad 4:Talk 5:Sleep");
+  Serial.println("6:Angry 7:Surprised 8:Doubt 9:Cry 10:Dizzy");
+  Serial.println("11:Wink 12:LookAround 13:Panic 14:Smug");
+  Serial.println("15:Scan 16:Bored 17:Love 18:Glitch 19:Sus 20:Furious 21:Petting");
+  Serial.println("=========================================");
+
+  for (;;) {
+    // 1. Kiểm tra Serial Input (Giữ nguyên)
+    if (Serial.available() > 0) {
+      int code = Serial.parseInt();
+      while(Serial.available() > 0) Serial.read(); // Đọc bỏ ký tự thừa
+
+      if (code >= 0 && code < NUM_ACTIONS) {
+        targetEmotionCode = code;
+        lastInteractionTime = millis(); // Reset thời gian rảnh
+        Serial.print(">> [SERIAL] Chuyen sang trang thai: ");
+        Serial.println(code);
+      } else {
+        Serial.println("Loi: Ma cam xuc phai tu 0 den 20.");
+      }
+    }
+
+    // Quét Serial mỗi 100ms
+    vTaskDelay(pdMS_TO_TICKS(100)); 
+  }
+}
+// ==========================================
 
 float lerpSpeed = 0.3; 
 
@@ -890,75 +920,27 @@ void setup() {
     while (1); 
   }
 
-  Serial.println("=========================================");
-  Serial.println("HE THONG DA KHOI DONG THANH CONG.");
-  Serial.println("Vui long nhap so tu 0 den 20 de doi mat (Hoặc CHẠM vào chân số 2):");
-  Serial.println("0:Idle 1:Normal 2:Happy 3:Sad 4:Talk 5:Sleep");
-  Serial.println("6:Angry 7:Surprised 8:Doubt 9:Cry 10:Dizzy");
-  Serial.println("11:Wink 12:LookAround 13:Panic 14:Smug");
-  Serial.println("15:Scan 16:Bored 17:Love 18:Glitch 19:Sus 20:Furious 21:Petting");
-  Serial.println("=========================================");
+  // Khởi chạy AI Task trên Core 0 (Priority 1) để xử lý riêng UART
+  // Để Core 1 dồn 100% sức mạnh cho việc vẽ đồ họa, đảm bảo không bao giờ bị khựng (stutter).
+  xTaskCreatePinnedToCore(
+    AITask,       // Hàm thực thi
+    "AI_Task",    // Tên task
+    4096,         // Kích thước Stack
+    NULL,         // Tham số
+    1,            // Độ ưu tiên
+    NULL,         // Task handle
+    0             // Ghim vào Core 0 (Rất quan trọng để tối ưu FPS)
+  );
 }
 
 void loop() {
-  // 0. Quản lý Serial Input (Nhập lệnh từ máy tính)
-  if (Serial.available() > 0) {
-    int code = Serial.parseInt();
-    while(Serial.available() > 0) Serial.read(); // Đọc bỏ ký tự thừa
+  // --- BỎ LOGIC TOUCH CỤC BỘ ---
+  // ESP32 này giờ chỉ đóng vai trò làm Màn hình (Display Node).
+  // Các lệnh vuốt ve (21) hay bình thường (1) sẽ được ESP khác gửi qua Serial (UART).
 
-    if (code >= 0 && code < NUM_ACTIONS) {
-      targetEmotionCode = code;
-      lastInteractionTime = millis(); // Reset thời gian rảnh
-      Serial.print(">> [SERIAL] Chuyen sang trang thai: ");
-      Serial.println(code);
-    } else {
-      Serial.println("Loi: Ma cam xuc phai tu 0 den 20.");
-    }
-  }
 
-  // 1. Kiểm tra Cảm biến chạm (Touch Sensor)
-  // [BẢO VỆ PHẦN CỨNG]: Đọc cảm biến cách nhau ít nhất 50ms để tụ điện trong chip ESP32 kịp nạp xả, tránh lỗi "lúc được lúc không"
-  static unsigned long lastTouchRead = 0;
-  
-  static int savedEmotionCode = 1;
-  static bool isBeingPetted = false;
-
-  if (millis() - lastTouchRead > 50) {
-    lastTouchRead = millis();
-    int touchValue = touchRead(TOUCH_PIN);
-    
-    // [DEBUG LOG]: In giá trị thô ra Serial mỗi 500ms để kiểm tra lỗi "lúc được lúc không"
-    static unsigned long lastDebugPrint = 0;
-    if (millis() - lastDebugPrint > 500) {
-      lastDebugPrint = millis();
-      Serial.print(">> [DEBUG] Gia tri Touch tho (Raw): ");
-      Serial.println(touchValue);
-    }
-    
-    if (touchValue > touchThreshold) {
-      lastInteractionTime = millis(); // Reset thời gian rảnh khi có người vuốt
-      if (!isBeingPetted) {
-        isBeingPetted = true;
-        savedEmotionCode = targetEmotionCode; // Lưu lại trạng thái cũ trước khi bị vuốt ve
-        targetEmotionCode = 21; // 21 là trạng thái Petting
-        Serial.print(">> [TOUCH] Phat hien vuot ve! (Touch = ");
-        Serial.print(touchValue);
-        Serial.println(") -> Chuyen sang trang thai 21 (Petting)");
-      }
-      lastTouchTime = millis(); // Liên tục cập nhật thời gian chừng nào còn giữ tay
-    } else {
-      // Đợi 1 giây (1000ms) sau khi buông tay để tự động trở về biểu cảm cũ
-      if (isBeingPetted && (millis() - lastTouchTime > 1000)) {
-        isBeingPetted = false;
-        targetEmotionCode = savedEmotionCode; 
-        Serial.print(">> [TOUCH] Da tha tay -> Phuc hoi trang thai cu: ");
-        Serial.println(targetEmotionCode);
-      }
-    }
-  }
-
-  // 3. Logic Timeout: Nếu đang ở trạng thái nhàn rỗi (0 hoặc 1) quá 15 giây mà không có tương tác, tự động nhìn xung quanh
-  if ((targetEmotionCode == 0 || targetEmotionCode == 1) && !isBeingPetted) {
+  // 2. Logic Timeout: Nếu đang ở trạng thái nhàn rỗi (0 hoặc 1) quá 15 giây mà không có lệnh UART mới, tự động nhìn xung quanh
+  if (targetEmotionCode == 0 || targetEmotionCode == 1) {
     if (millis() - lastInteractionTime > 15000) { 
       targetEmotionCode = 12; // Chuyển sang LookAround
       Serial.println(">> [AUTO] Khong co tuong tac 15s -> Tu dong chuyen sang nhin xung quanh (12)");
