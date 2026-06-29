@@ -951,11 +951,19 @@ void loop() {
   // AITask (Core 0) sẽ liên tục cập nhật biến targetEmotionCode từ UART.
   // Vòng lặp này (Core 1) chỉ tập trung vào việc vẽ ra màn hình.
 
-  // 1. Logic Timeout: Nếu đang ở trạng thái nhàn rỗi (0 hoặc 1) quá 15 giây mà không có lệnh UART mới, tự động nhìn xung quanh
+  // 1. Logic Timeout Nhàn rỗi: Quá 15 giây không có lệnh UART -> Ngó nghiêng (12)
   if (targetEmotionCode == 0 || targetEmotionCode == 1) {
     if (millis() - lastInteractionTime > 15000) { 
       targetEmotionCode = 12; // Chuyển sang LookAround
       Serial.println(">> [AUTO] Khong co tuong tac 15s -> Tu dong chuyen sang nhin xung quanh (12)");
+    }
+  }
+
+  // 2. Logic Timeout Ngủ gật: Đang ngó nghiêng (12) quá 10 phút (600,000ms) -> Đi ngủ (5)
+  if (targetEmotionCode == 12) {
+    if (millis() - lastInteractionTime > 600000) { 
+      targetEmotionCode = 5; // Chuyển sang Sleep
+      Serial.println(">> [AUTO] Khong co tuong tac 10 phut -> Tu dong di ngu (5)");
     }
   }
 
