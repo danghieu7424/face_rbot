@@ -1000,10 +1000,10 @@ void loop() {
         float progress = (elapsed - 3500) / 1500.0; // Tính % hoàn thành của giai đoạn này (0.0 -> 1.0)
         targetFace.eyeHeight = 25.0f - (20.0f * progress); 
         
-        // Hiệu ứng chép miệng và gật gù (Tăng tốc độ sóng và kích thước miệng)
-        targetFace.offsetY = 8 + 2 * sin(elapsed * 0.02);    
-        targetFace.mouthHeight = 5 + 4 * sin(elapsed * 0.025); 
-        targetFace.mouthWidth = 22 + 5 * cos(elapsed * 0.025);
+        // Hiệu ứng chép miệng và gật gù chậm lại (Chỉ mấp máy 1-2 lần rất từ tốn)
+        targetFace.offsetY = 8 + 2 * sin(elapsed * 0.008);    
+        targetFace.mouthHeight = 5 + 4 * sin(elapsed * 0.008); 
+        targetFace.mouthWidth = 22 + 5 * cos(elapsed * 0.008);
       } else if (elapsed > 1200) {
         // Giai đoạn Ngáp (Yawn): Miệng mở to chữ O, mắt nhắm hờ, đầu hơi ngước
         targetFace = stateNormal; 

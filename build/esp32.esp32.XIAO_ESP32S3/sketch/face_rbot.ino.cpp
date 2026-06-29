@@ -1018,7 +1018,10 @@ void loop() {
         // Giai đoạn ngáp xong (3500ms - 5000ms): Nhắm nghiền mắt lại, gật gù và chép miệng "mlem mlem"
         targetFace = stateNormal; 
         targetFace.eyeAngle = -8;    // Đuôi mắt cụp hẳn xuống vì quá buồn ngủ
-        targetFace.eyeHeight = 4;    // Mắt nhắm chặt lại một nhịp sau khi ngáp to
+        
+        // Mắt sụp xuống TỪ TỪ trong suốt 1.5s mấp máy môi (từ độ cao 25 xuống 5) - Cố gắng gượng ngủ
+        float progress = (elapsed - 3500) / 1500.0; // Tính % hoàn thành của giai đoạn này (0.0 -> 1.0)
+        targetFace.eyeHeight = 25.0f - (20.0f * progress); 
         
         // Hiệu ứng chép miệng và gật gù (Tăng tốc độ sóng và kích thước miệng)
         targetFace.offsetY = 8 + 2 * sin(elapsed * 0.02);    
