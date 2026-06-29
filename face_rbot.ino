@@ -236,6 +236,9 @@ void updateFaceLogic() {
   if (targetFace.eyeHeight == stateSleep.eyeHeight) {
     currentLerp = 0.35; // Ngủ: Chuyển trạng thái nhanh hơn nữa
   }
+  else if (targetFace.eyeAngle == -8) {
+    currentLerp = 0.8;  // Chép miệng sau ngáp: Tốc độ nội suy cực cao để bắt kịp sóng Sin
+  }
   else if (targetFace.eyeHeight == stateSurprised.eyeHeight) {
     currentLerp = 0.6;  // Ngạc nhiên: Giật bắn mình mở to mắt (Cực nhanh)
   }
@@ -994,11 +997,10 @@ void loop() {
         targetFace.eyeAngle = -8;    // Đuôi mắt cụp hẳn xuống vì quá buồn ngủ
         targetFace.eyeHeight = 4;    // Mắt nhắm chặt lại một nhịp sau khi ngáp to
         
-        // Hiệu ứng chép miệng và gật gù (chu kỳ chậm rãi 0.01 để nhìn rõ hơn)
-        // mouthHeight dao động từ 3 đến 9 (luôn > 2 để không bị vẽ thành đường thẳng)
-        targetFace.offsetY = 8 + 2 * sin(elapsed * 0.01);    
-        targetFace.mouthHeight = 6 + 3 * sin(elapsed * 0.01); 
-        targetFace.mouthWidth = 14 + 3 * cos(elapsed * 0.01);
+        // Hiệu ứng chép miệng và gật gù (Tăng tốc độ sóng và kích thước miệng)
+        targetFace.offsetY = 8 + 2 * sin(elapsed * 0.02);    
+        targetFace.mouthHeight = 5 + 4 * sin(elapsed * 0.025); 
+        targetFace.mouthWidth = 22 + 5 * cos(elapsed * 0.025);
       } else if (elapsed > 1200) {
         // Giai đoạn Ngáp (Yawn): Miệng mở to chữ O, mắt nhắm hờ, đầu hơi ngước
         targetFace = stateNormal; 
