@@ -131,17 +131,15 @@ void readMockSensors();
 float calculateReward(int state, int action);
 #line 167 "C:\\rust\\face_rbot\\face_rbot.ino"
 void learn(int state, int action, float reward, int nextState);
-#line 184 "C:\\rust\\face_rbot\\face_rbot.ino"
-void AITask(void *pvParameters);
-#line 229 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 198 "C:\\rust\\face_rbot\\face_rbot.ino"
 void updateFaceLogic();
-#line 319 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 288 "C:\\rust\\face_rbot\\face_rbot.ino"
 uint32_t lerpColor(uint32_t from, uint32_t to, float t);
-#line 512 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 481 "C:\\rust\\face_rbot\\face_rbot.ino"
 void renderToScreen();
-#line 904 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 873 "C:\\rust\\face_rbot\\face_rbot.ino"
 void setup();
-#line 936 "C:\\rust\\face_rbot\\face_rbot.ino"
+#line 903 "C:\\rust\\face_rbot\\face_rbot.ino"
 void loop();
 #line 124 "C:\\rust\\face_rbot\\face_rbot.ino"
 int getStateIndex(int temp, int sound, int touch) {
@@ -203,38 +201,7 @@ const int TOUCH_PIN = 2;
 int touchThreshold = 20000; // Đã hạ ngưỡng xuống 40,000 (do tay chạm thực tế khoảng 95,000)
 unsigned long lastTouchTime = 0;
 
-// Task chạy trên Core 0 (Độc lập với Vẽ đồ họa)
-void AITask(void *pvParameters) {
-  Serial.println("=========================================");
-  Serial.println("AI DANG DUOC TAM DUNG DE DEBUG.");
-  Serial.println("Vui long nhap so tu 0 den 20 de doi mat (Hoặc CHẠM vào chân số 2):");
-  Serial.println("0:Idle 1:Normal 2:Happy 3:Sad 4:Talk 5:Sleep");
-  Serial.println("6:Angry 7:Surprised 8:Doubt 9:Cry 10:Dizzy");
-  Serial.println("11:Wink 12:LookAround 13:Panic 14:Smug");
-  Serial.println("15:Scan 16:Bored 17:Love 18:Glitch 19:Sus 20:Furious 21:Petting");
-  Serial.println("=========================================");
 
-  for (;;) {
-    // 1. Kiểm tra Serial Input (Giữ nguyên)
-    if (Serial.available() > 0) {
-      int code = Serial.parseInt();
-      while(Serial.available() > 0) Serial.read(); // Đọc bỏ ký tự thừa
-
-      if (code >= 0 && code < NUM_ACTIONS) {
-        targetEmotionCode = code;
-        lastInteractionTime = millis(); // Reset thời gian rảnh
-        Serial.print(">> [SERIAL] Chuyen sang trang thai: ");
-        Serial.println(code);
-      } else {
-        Serial.println("Loi: Ma cam xuc phai tu 0 den 20.");
-      }
-    }
-
-    // Quét Serial mỗi 100ms
-    vTaskDelay(pdMS_TO_TICKS(100)); 
-  }
-}
-// ==========================================
 
 float lerpSpeed = 0.3; 
 
@@ -944,19 +911,32 @@ void setup() {
     while (1); 
   }
 
-  // Khởi chạy AI Task trên Core 0 (Priority 1)
-  xTaskCreatePinnedToCore(
-    AITask,       // Hàm thực thi
-    "AI_Task",    // Tên task
-    4096,         // Kích thước Stack
-    NULL,         // Tham số
-    1,            // Độ ưu tiên
-    NULL,         // Task handle
-    0             // Ghim vào Core 0
-  );
+  Serial.println("=========================================");
+  Serial.println("HE THONG DA KHOI DONG THANH CONG.");
+  Serial.println("Vui long nhap so tu 0 den 20 de doi mat (Hoặc CHẠM vào chân số 2):");
+  Serial.println("0:Idle 1:Normal 2:Happy 3:Sad 4:Talk 5:Sleep");
+  Serial.println("6:Angry 7:Surprised 8:Doubt 9:Cry 10:Dizzy");
+  Serial.println("11:Wink 12:LookAround 13:Panic 14:Smug");
+  Serial.println("15:Scan 16:Bored 17:Love 18:Glitch 19:Sus 20:Furious 21:Petting");
+  Serial.println("=========================================");
 }
 
 void loop() {
+  // 0. Quản lý Serial Input (Nhập lệnh từ máy tính)
+  if (Serial.available() > 0) {
+    int code = Serial.parseInt();
+    while(Serial.available() > 0) Serial.read(); // Đọc bỏ ký tự thừa
+
+    if (code >= 0 && code < NUM_ACTIONS) {
+      targetEmotionCode = code;
+      lastInteractionTime = millis(); // Reset thời gian rảnh
+      Serial.print(">> [SERIAL] Chuyen sang trang thai: ");
+      Serial.println(code);
+    } else {
+      Serial.println("Loi: Ma cam xuc phai tu 0 den 20.");
+    }
+  }
+
   // 1. Kiểm tra Cảm biến chạm (Touch Sensor)
   // [BẢO VỆ PHẦN CỨNG]: Đọc cảm biến cách nhau ít nhất 50ms để tụ điện trong chip ESP32 kịp nạp xả, tránh lỗi "lúc được lúc không"
   static unsigned long lastTouchRead = 0;
